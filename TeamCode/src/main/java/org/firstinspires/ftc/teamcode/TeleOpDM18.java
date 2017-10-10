@@ -94,8 +94,11 @@ public class TeleOpDM18 extends OpMode {
     public void loop() {
 
         double jewel_pos = robot.jewelServo.getPosition();
+        double jewel_rot_pos = robot.jewelRotServo.getPosition();
         double grip_pos = robot.gripServo.getPosition();
         telemetry.addData("Pos: ", grip_pos);
+        telemetry.addData("JPos: ", jewel_pos);
+        telemetry.addData("JRPos", jewel_rot_pos);
         telemetry.update();
 
         double left;
@@ -136,6 +139,11 @@ public class TeleOpDM18 extends OpMode {
 
         jewel_pos = Range.clip(jewel_pos, robot.JEWEL_HOME, robot.JEWEL_DEPLOY);
         robot.jewelServo.setPosition(jewel_pos);
+
+        if (gamepad2.y) jewel_rot_pos += 0.001;
+        if (gamepad2.a) jewel_rot_pos -= 0.001;
+        jewel_rot_pos = Range.clip(jewel_rot_pos, 0, 1.0);
+        robot.jewelRotServo.setPosition(jewel_rot_pos);
 
         if (gamepad1.left_bumper) grip_pos+=0.01;
         if (gamepad1.right_bumper) grip_pos-=0.01;

@@ -65,11 +65,18 @@ public class HardwareDM18
     public DcMotor  intakeRightMotor  = null;
 
     public Servo    jewelServo   = null;
+    public Servo    jewelRotServo = null;
     public Servo    gripServo    = null;
     public Servo    rotateServo  = null;
 
+    public ColorSensor  jewelCS = null;
+
     public final static double JEWEL_HOME = 0.11;
     public final static double JEWEL_DEPLOY = 0.76;
+    public final static double JEWEL_ROT_HOME = 0.52;
+    public final static double JEWEL_ROT_FWD = 0.42;
+    public final static double JEWEL_ROT_REV = 0.62;
+
     public final static double GRIP_HOME = 0.0;
     public final static double GRIP_DEPLOY = 1.0;
     public final static double ROTATE_HOME = 0.0;
@@ -130,15 +137,17 @@ public class HardwareDM18
 
         // Define and initialize ALL installed servos.
         jewelServo = hwMap.servo.get("jewel");
+        jewelRotServo = hwMap.servo.get("jewelRot");
         gripServo = hwMap.servo.get("grip");
         rotateServo = hwMap.servo.get("rotate");
 
         jewelServo.setPosition(JEWEL_HOME);
+        jewelRotServo.setPosition(JEWEL_ROT_HOME);
         gripServo.setPosition(GRIP_HOME);
         rotateServo.setPosition(ROTATE_HOME);
 
         // Define color sensor
-        //colorSensor = hwMap.get(colorSensor.getClass(), "cs");
+        jewelCS = hwMap.colorSensor.get("cs");
     }
  }
 
