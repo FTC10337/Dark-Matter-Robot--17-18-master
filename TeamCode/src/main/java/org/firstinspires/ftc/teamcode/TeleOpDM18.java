@@ -95,10 +95,10 @@ public class TeleOpDM18 extends OpMode {
 
         double jewel_pos = robot.jewelServo.getPosition();
         double jewel_rot_pos = robot.jewelRotServo.getPosition();
-        double grip_pos = robot.gripServo.getPosition();
-        telemetry.addData("Pos: ", grip_pos);
-        telemetry.addData("JPos: ", jewel_pos);
-        telemetry.addData("JRPos", jewel_rot_pos);
+        double grip_top_pos = robot.gripTopServo.getPosition();
+        double grip_bottom_pos = robot.gripBottomServo.getPosition();
+        telemetry.addData("TopPos: ", grip_top_pos);
+        telemetry.addData("BotPos: ", grip_bottom_pos);
         telemetry.update();
 
         double left;
@@ -145,22 +145,28 @@ public class TeleOpDM18 extends OpMode {
         jewel_rot_pos = Range.clip(jewel_rot_pos, 0, 1.0);
         robot.jewelRotServo.setPosition(jewel_rot_pos);
 
-        if (gamepad1.left_bumper) grip_pos+=0.01;
-        if (gamepad1.right_bumper) grip_pos-=0.01;
+        if (gamepad1.left_bumper) grip_top_pos+=0.01;
+        if (gamepad1.right_bumper) grip_top_pos-=0.01;
 
-        grip_pos = Range.clip(grip_pos, robot.GRIP_HOME, robot.GRIP_DEPLOY);
-        robot.gripServo.setPosition(grip_pos);
+        grip_top_pos = Range.clip(grip_top_pos, robot.GRIP_TOP_OPEN, robot.GRIP_TOP_CLOSED);
+        robot.gripTopServo.setPosition(grip_top_pos);
 
-        if (gamepad1.dpad_left) robot.rotateServo.setPosition(robot.ROTATE_DEPLOY);
-        if (gamepad1.dpad_right) robot.rotateServo.setPosition(robot.ROTATE_HOME);
+        if (gamepad2.left_bumper) grip_bottom_pos+=0.01;
+        if (gamepad2.right_bumper) grip_bottom_pos-=0.01;
+
+        grip_bottom_pos = Range.clip(grip_bottom_pos, robot.GRIP_BOTTOM_OPEN, robot.GRIP_BOTTOM_CLOSED);
+        robot.gripBottomServo.setPosition(grip_bottom_pos);
+
+        if (gamepad1.dpad_left) robot.gripRotateServo.setPosition(robot.GRIP_ROTATE_NORMAL);
+        if (gamepad1.dpad_right) robot.gripRotateServo.setPosition(robot.GRIP_ROTATE_FLIPPED);
 
         if (gamepad1.x) {
-            robot.intakeLeftMotor.setPower(1.0);
-            robot.intakeRightMotor.setPower(0.75);
+            robot.intakeLeftMotor.setPower(0.75);
+            robot.intakeRightMotor.setPower(0.5);
         }
         if (gamepad1.b) {
-            robot.intakeLeftMotor.setPower(-0.25);
-            robot.intakeRightMotor.setPower(-0.25);
+            robot.intakeLeftMotor.setPower(-0.5);
+            robot.intakeRightMotor.setPower(-0.5);
         }
         if (gamepad1.dpad_down) {
             robot.intakeLeftMotor.setPower(0.0);
