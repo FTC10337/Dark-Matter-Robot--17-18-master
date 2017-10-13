@@ -66,20 +66,23 @@ public class HardwareDM18
     public DcMotor  intakeLeftMotor   = null;
     public DcMotor  intakeRightMotor  = null;
 
-    public Servo    jewelServo      = null;
-    public Servo    jewelRotServo   = null;
-    public Servo    gripTopServo    = null;
-    public Servo    gripBottomServo = null;
-    public Servo    gripRotateServo = null;
-    public Servo    gripExtendServo = null;
+    public Servo    jewelServo       = null;
+    public Servo    jewelRotServo    = null;
+    public Servo    gripTopServo     = null;
+    public Servo    gripBottomServo  = null;
+    public Servo    gripRotateServo  = null;
+    public Servo    gripExtendServo  = null;
+    public Servo    intakeLeftServo  = null;
+    public Servo    intakeRightServo = null;
+
 
     public ColorSensor  jewelCS = null;
 
     public final static double JEWEL_HOME = 0.11;
     public final static double JEWEL_DEPLOY = 0.76;
     public final static double JEWEL_ROT_HOME = 0.52;
-    public final static double JEWEL_ROT_FWD = 0.42;
-    public final static double JEWEL_ROT_REV = 0.62;
+    public final static double JEWEL_ROT_FWD = 0.62;
+    public final static double JEWEL_ROT_REV = 0.42;
 
     public final static double GRIP_TOP_OPEN = 0.0;
     public final static double GRIP_TOP_CLOSED = 1.0;
@@ -89,6 +92,19 @@ public class HardwareDM18
     public final static double GRIP_ROTATE_FLIPPED = 1.0;
     public final static double GRIP_EXTEND_HOME = 0.0;
     public final static double GRIP_EXTEND_OUT = 1.0;
+
+    public final static double INTAKE_LEFT_HOME = 0.94;
+    public final static double INTAKE_LEFT_RELEASE = 0.61;
+    public final static double INTAKE_RIGHT_HOME = 0.11;
+    public final static double INTAKE_RIGHT_RELEASE = 0.32;
+
+
+    /* Drive train constants */
+    static final int     COUNTS_PER_MOTOR_REV    = 7 ;    // Neverrest
+    static final double     DRIVE_GEAR_REDUCTION    = 19.2 * 72 / 48 ;     // This is < 1.0 if geared UP
+    static final double     WHEEL_DIAMETER_INCHES   = 4.0 ;     // For figuring circumference
+    static final double     COUNTS_PER_INCH         = (4 * COUNTS_PER_MOTOR_REV * DRIVE_GEAR_REDUCTION) /
+            (WHEEL_DIAMETER_INCHES * 3.1415);
 
     /* local OpMode members. */
     HardwareMap hwMap           =  null;
@@ -154,15 +170,52 @@ public class HardwareDM18
         gripBottomServo = hwMap.servo.get("gripBottom");
         gripRotateServo = hwMap.servo.get("gripRotate");
         gripExtendServo = hwMap.servo.get("gripExtend");
+        intakeLeftServo = hwMap.servo.get("ils");
+        intakeRightServo = hwMap.servo.get("irs");
 
+
+        // Set init positions of servos
         jewelServo.setPosition(JEWEL_HOME);
         jewelRotServo.setPosition(JEWEL_ROT_HOME);
         gripTopServo.setPosition(GRIP_TOP_OPEN);
         gripBottomServo.setPosition(GRIP_BOTTOM_OPEN);
         gripRotateServo.setPosition(GRIP_ROTATE_NORMAL);
+        intakeLeftServo.setPosition(INTAKE_LEFT_HOME);
+        intakeRightServo.setPosition(INTAKE_RIGHT_HOME);
 
         // Define color sensor
         jewelCS = hwMap.colorSensor.get("cs");
     }
- }
+
+
+    /**
+     *
+     * @param mode  RunMode to set the drive train to (e.g. w/ or w/o encoders)
+     *
+     * Sets all drive train motors to the designated mode
+     */
+    public void setDriveMode(DcMotor.RunMode mode) {
+        leftDrive1.setMode(mode);
+        leftDrive2.setMode(mode);
+        rightDrive1.setMode(mode);
+        rightDrive2.setMode(mode);
+    }
+
+    /**
+     *
+     * @param behavior  ZeroPower Behavior to set on motors -- brake or float
+     *
+     * Sets all drive train motors to float or brake mode as directed
+     *
+     */
+    public void setDriveZeroPower(DcMotor.ZeroPowerBehavior behavior) {
+        leftDrive1.setZeroPowerBehavior(behavior);
+        leftDrive2.setZeroPowerBehavior(behavior);
+        rightDrive1.setZeroPowerBehavior(behavior);
+        rightDrive2.setZeroPowerBehavior(behavior);
+
+    }
+
+
+}
 

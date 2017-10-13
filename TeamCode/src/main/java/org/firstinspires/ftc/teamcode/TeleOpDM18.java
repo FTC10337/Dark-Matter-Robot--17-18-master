@@ -97,8 +97,17 @@ public class TeleOpDM18 extends OpMode {
         double jewel_rot_pos = robot.jewelRotServo.getPosition();
         double grip_top_pos = robot.gripTopServo.getPosition();
         double grip_bottom_pos = robot.gripBottomServo.getPosition();
-        telemetry.addData("TopPos: ", grip_top_pos);
-        telemetry.addData("BotPos: ", grip_bottom_pos);
+        double intake_left_pos = robot.intakeLeftServo.getPosition();
+        double intake_right_pos = robot.intakeRightServo.getPosition();
+        telemetry.addData("left Pos: ", intake_left_pos);
+        telemetry.addData("right Pos: ", intake_right_pos);
+        //telemetry.addData("r int enc: ", robot.intakeRightMotor.getCurrentPosition());
+        //telemetry.addData("l int enc: ", robot.intakeLeftMotor.getCurrentPosition());
+        //telemetry.addData("lDrive1: ", robot.leftDrive1.getCurrentPosition());
+        //telemetry.addData("lDrive2: ", robot.leftDrive2.getCurrentPosition());
+        //telemetry.addData("rDrive1: ", robot.rightDrive1.getCurrentPosition());
+        //telemetry.addData("rDrive2: ", robot.rightDrive2.getCurrentPosition());
+
         telemetry.update();
 
         double left;
@@ -109,7 +118,7 @@ public class TeleOpDM18 extends OpMode {
 
         // Smooth and deadzone the joytick values
         throttle = smoothPowerCurve(deadzone(throttle, 0.10));
-        direction = smoothPowerCurve(deadzone(direction, 0.10));
+        direction = (smoothPowerCurve(deadzone(direction, 0.10)))/2;
 
         // Calculate the drive motors for left and right
         right = throttle - direction;
@@ -131,8 +140,19 @@ public class TeleOpDM18 extends OpMode {
         robot.rightDrive2.setPower(right);
 
 
+        //if (gamepad1.left_bumper) intake_left_pos+=0.01;
+        //if (gamepad1.right_bumper) intake_left_pos-=0.01;
 
+        //intake_left_pos = Range.clip(intake_left_pos, robot.INTAKE_LEFT_HOME, robot.INTAKE_LEFT_RELEASE);
+        //robot.intakeLeftServo.setPosition(intake_left_pos);
 
+        //if (gamepad2.left_bumper) intake_right_pos+=0.01;
+        //if (gamepad2.right_bumper) intake_right_pos-=0.01;
+
+        //intake_right_pos= Range.clip(intake_right_pos, robot.INTAKE_RIGHT_HOME, robot.INTAKE_RIGHT_RELEASE);
+        //robot.intakeRightServo.setPosition(intake_right_pos);
+
+        /*
         if (gamepad1.y) jewel_pos+=0.001;
 
         if (gamepad1.a) jewel_pos-=0.001;
@@ -159,18 +179,37 @@ public class TeleOpDM18 extends OpMode {
 
         if (gamepad1.dpad_left) robot.gripRotateServo.setPosition(robot.GRIP_ROTATE_NORMAL);
         if (gamepad1.dpad_right) robot.gripRotateServo.setPosition(robot.GRIP_ROTATE_FLIPPED);
+        */
 
-        if (gamepad1.x) {
-            robot.intakeLeftMotor.setPower(0.75);
-            robot.intakeRightMotor.setPower(0.5);
+        // Intake IN
+        if (gamepad1.right_trigger > 0.5) {
+            robot.intakeLeftMotor.setPower(1.0);
+            robot.intakeRightMotor.setPower(0.8);
         }
-        if (gamepad1.b) {
-            robot.intakeLeftMotor.setPower(-0.5);
-            robot.intakeRightMotor.setPower(-0.5);
+
+        // Intake OUT
+
+        if (gamepad1.left_trigger > 0.5) {
+            robot.intakeLeftMotor.setPower(-1.0);
+            robot.intakeRightMotor.setPower(-1.0);
         }
-        if (gamepad1.dpad_down) {
+
+        // Intake STOP
+        if (gamepad1.right_bumper || gamepad1.left_bumper) {
             robot.intakeLeftMotor.setPower(0.0);
             robot.intakeRightMotor.setPower(0.0);
+        }
+
+
+        // Intake open & close
+        if (gamepad1.x) {
+            robot.intakeLeftServo.setPosition(robot.INTAKE_LEFT_HOME);
+            robot.intakeRightServo.setPosition(robot.INTAKE_RIGHT_HOME);
+        }
+        if (gamepad1.b) {
+            robot.intakeLeftServo.setPosition(robot.INTAKE_LEFT_RELEASE);
+            robot.intakeRightServo.setPosition(robot.INTAKE_RIGHT_RELEASE);
+
         }
 
 
