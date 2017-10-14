@@ -35,6 +35,7 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.robotcontroller.external.samples.HardwarePushbot;
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 
 /**
  * This file provides basic Telop driving for a Pushbot robot.
@@ -58,6 +59,9 @@ public class TeleOpDM18 extends OpMode {
     /* Declare OpMode members. */
     HardwareDM18 robot = new HardwareDM18(); // use the class created to define a Pushbot's hardware
     // could also use HardwarePushbotMatrix class.
+
+
+    boolean intake = false;
 
     /*
      * Code to run ONCE when the driver hits INIT
@@ -99,8 +103,9 @@ public class TeleOpDM18 extends OpMode {
         double grip_bottom_pos = robot.gripBottomServo.getPosition();
         double intake_left_pos = robot.intakeLeftServo.getPosition();
         double intake_right_pos = robot.intakeRightServo.getPosition();
-        telemetry.addData("left Pos: ", intake_left_pos);
-        telemetry.addData("right Pos: ", intake_right_pos);
+        telemetry.addData("Dist: ", robot.jewelDS.getDistance(DistanceUnit.CM));
+        //telemetry.addData("left Pos: ", intake_left_pos);
+        //telemetry.addData("right Pos: ", intake_right_pos);
         //telemetry.addData("r int enc: ", robot.intakeRightMotor.getCurrentPosition());
         //telemetry.addData("l int enc: ", robot.intakeLeftMotor.getCurrentPosition());
         //telemetry.addData("lDrive1: ", robot.leftDrive1.getCurrentPosition());
@@ -183,8 +188,19 @@ public class TeleOpDM18 extends OpMode {
 
         // Intake IN
         if (gamepad1.right_trigger > 0.5) {
+            intake = true;
+        }
+
+
+        if (intake == true) {
             robot.intakeLeftMotor.setPower(1.0);
             robot.intakeRightMotor.setPower(0.6);
+            }
+
+        if (intake == true && robot.jewelDS.getDistance(DistanceUnit.CM) < 7.0) {
+            robot.intakeLeftMotor.setPower(0.0);
+            robot.intakeRightMotor.setPower(0.0);
+            intake = false;
         }
 
         // Intake OUT
@@ -192,12 +208,14 @@ public class TeleOpDM18 extends OpMode {
         if (gamepad1.left_trigger > 0.5) {
             robot.intakeLeftMotor.setPower(-1.0);
             robot.intakeRightMotor.setPower(-1.0);
+            intake = false;
         }
 
         // Intake STOP
         if (gamepad1.a) {
             robot.intakeLeftMotor.setPower(0.0);
             robot.intakeRightMotor.setPower(0.0);
+            intake = false;
         }
 
 
