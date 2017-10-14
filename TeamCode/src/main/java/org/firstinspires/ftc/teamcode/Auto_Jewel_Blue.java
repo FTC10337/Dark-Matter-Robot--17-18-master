@@ -299,7 +299,7 @@ public class Auto_Jewel_Blue extends LinearOpMode {
            // Turn toward center cryptoglph
            gyroTurn(0.8, 90, P_TURN_COEFF);
            // Drive closer to center crytoglyph
-           encoderDrive(0.5, 9, 3.0, false, 90);
+           encoderDrive(0.5, 9.5, 3.0, false, 90);
            // Outake glyph
            robot.intakeLeftMotor.setPower(-1.0);
            robot.intakeRightMotor.setPower(-1.0);
@@ -317,7 +317,7 @@ public class Auto_Jewel_Blue extends LinearOpMode {
             // Turn toward center cryptoglph
             gyroTurn(0.8, 90, P_TURN_COEFF);
             // Drive closer to center crytoglyph
-            encoderDrive(0.5, 9, 3.0, false, 90);
+            encoderDrive(0.5, 9.5, 3.0, false, 90);
             // Outake glyph
             robot.intakeLeftMotor.setPower(-1.0);
             robot.intakeRightMotor.setPower(-1.0);
@@ -354,7 +354,7 @@ public class Auto_Jewel_Blue extends LinearOpMode {
         sleep(500);
 
         // Drive back, but stay in safe zone
-        encoderDrive(0.5, 2.0, 3.0, false, 90);
+        encoderDrive(0.5, -5.0, 3.0, false, 90);
 
         sleep(2000);
         // Pull intake wheels back into release position before backing off crytoglyh

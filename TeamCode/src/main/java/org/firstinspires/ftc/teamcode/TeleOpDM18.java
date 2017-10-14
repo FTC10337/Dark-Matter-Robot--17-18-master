@@ -189,7 +189,7 @@ public class TeleOpDM18 extends OpMode {
         // Intake IN
         if (gamepad1.right_trigger > 0.5) {
             intake = true;
-        }
+            }
 
 
         if (intake == true) {
@@ -201,7 +201,7 @@ public class TeleOpDM18 extends OpMode {
             robot.intakeLeftMotor.setPower(0.0);
             robot.intakeRightMotor.setPower(0.0);
             intake = false;
-        }
+            }
 
         // Intake OUT
 
@@ -209,26 +209,26 @@ public class TeleOpDM18 extends OpMode {
             robot.intakeLeftMotor.setPower(-1.0);
             robot.intakeRightMotor.setPower(-1.0);
             intake = false;
-        }
+            }
 
         // Intake STOP
         if (gamepad1.a) {
             robot.intakeLeftMotor.setPower(0.0);
             robot.intakeRightMotor.setPower(0.0);
             intake = false;
-        }
+            }
 
 
         // Intake open & close
         if (gamepad1.x) {
             robot.intakeLeftServo.setPosition(robot.INTAKE_LEFT_HOME);
             robot.intakeRightServo.setPosition(robot.INTAKE_RIGHT_HOME);
-        }
+            }
         if (gamepad1.b) {
             robot.intakeLeftServo.setPosition(robot.INTAKE_LEFT_RELEASE);
             robot.intakeRightServo.setPosition(robot.INTAKE_RIGHT_RELEASE);
 
-        }
+            }
 
 
     }

@@ -34,6 +34,7 @@ import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
@@ -79,6 +80,7 @@ public class HardwareDM18
 
 
     public ColorSensor  jewelCS = null;
+    public DistanceSensor jewelDS = null;
 
     BNO055IMU adaGyro;
 
@@ -178,6 +180,7 @@ public class HardwareDM18
         intakeRightServo = hwMap.servo.get("irs");
 
 
+
         // Set init positions of servos
         jewelServo.setPosition(JEWEL_HOME);
         jewelRotServo.setPosition(JEWEL_ROT_HOME);
@@ -189,6 +192,9 @@ public class HardwareDM18
 
         // Define color sensor
         jewelCS = hwMap.colorSensor.get("cs");
+
+        // Define distance sensor
+        jewelDS = hwMap.get(DistanceSensor.class, "ds");
 
         AdafruitBNO055IMU.Parameters parameters = new AdafruitBNO055IMU.Parameters();
         parameters.angleUnit           = AdafruitBNO055IMU.AngleUnit.DEGREES;
