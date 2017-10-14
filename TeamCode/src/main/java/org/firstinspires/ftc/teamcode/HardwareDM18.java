@@ -29,6 +29,8 @@
 
 package org.firstinspires.ftc.teamcode;
 
+import com.qualcomm.hardware.adafruit.AdafruitBNO055IMU;
+import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
@@ -78,6 +80,8 @@ public class HardwareDM18
 
     public ColorSensor  jewelCS = null;
 
+    BNO055IMU adaGyro;
+
     public final static double JEWEL_HOME = 0.11;
     public final static double JEWEL_DEPLOY = 0.76;
     public final static double JEWEL_ROT_HOME = 0.52;
@@ -100,7 +104,7 @@ public class HardwareDM18
 
 
     /* Drive train constants */
-    static final int     COUNTS_PER_MOTOR_REV    = 7 ;    // Neverrest
+    static final int        COUNTS_PER_MOTOR_REV    = 7 ;    // Neverrest
     static final double     DRIVE_GEAR_REDUCTION    = 19.2 * 72 / 48 ;     // This is < 1.0 if geared UP
     static final double     WHEEL_DIAMETER_INCHES   = 4.0 ;     // For figuring circumference
     static final double     COUNTS_PER_INCH         = (4 * COUNTS_PER_MOTOR_REV * DRIVE_GEAR_REDUCTION) /
@@ -185,6 +189,22 @@ public class HardwareDM18
 
         // Define color sensor
         jewelCS = hwMap.colorSensor.get("cs");
+
+        AdafruitBNO055IMU.Parameters parameters = new AdafruitBNO055IMU.Parameters();
+        parameters.angleUnit           = AdafruitBNO055IMU.AngleUnit.DEGREES;
+        parameters.accelUnit           = AdafruitBNO055IMU.AccelUnit.METERS_PERSEC_PERSEC;
+        parameters.calibrationDataFile = "AdafruitIMUCalibration.json"; // see the calibration sample opmode
+        parameters.loggingEnabled      = true;
+        parameters.loggingTag          = "IMU";
+        //parameters.accelerationIntegrationAlgorithm = new JustLoggingAccelerationIntegrator();
+
+        // Retrieve and initialize the IMU. We expect the IMU to be attached to an I2C port
+        // on a Core Device Interface Module, configured to be a sensor of type "AdaFruit IMU",
+        // and named "adaGyro".
+        adaGyro = hwMap.get(BNO055IMU.class, "gyro");
+        adaGyro.initialize(parameters);
+
+
     }
 
 
