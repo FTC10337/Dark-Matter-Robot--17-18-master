@@ -345,6 +345,23 @@ public class Auto_Jewel_Blue extends LinearOpMode {
             robot.intakeRightMotor.setPower(0.0);
         }
 
+        sleep(1000);
+
+        // Pull intake wheels back into release position before backing off crytoglyh
+        robot.intakeLeftServo.setPosition(robot.INTAKE_LEFT_RELEASE);
+        robot.intakeRightServo.setPosition(robot.INTAKE_RIGHT_RELEASE);
+
+        sleep(500);
+
+        // Drive back, but stay in safe zone
+        encoderDrive(0.5, 2.0, 3.0, false, 90);
+
+        sleep(2000);
+        // Pull intake wheels back into release position before backing off crytoglyh
+        robot.intakeLeftServo.setPosition(robot.INTAKE_LEFT_HOME);
+        robot.intakeRightServo.setPosition(robot.INTAKE_RIGHT_HOME);
+
+
 
 
 
