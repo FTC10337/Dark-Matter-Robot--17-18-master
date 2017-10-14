@@ -53,9 +53,9 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
  * Remove or comment out the @Disabled line to add this opmode to the Driver Station OpMode list
  */
 
-@Autonomous(name="Jewel RedTeam", group="DM18")
+@Autonomous(name="Auto Jewel Red", group="DM18")
 //@Disabled
-public class Matthew_Pakorn_autoJewelRed extends Matthew_Pakorn_autoJewelBlue {
+public class Auto_Jewel_Red  extends Auto_Jewel_Blue {
 
 
 

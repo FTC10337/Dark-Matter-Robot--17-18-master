@@ -184,7 +184,7 @@ public class TeleOpDM18 extends OpMode {
         // Intake IN
         if (gamepad1.right_trigger > 0.5) {
             robot.intakeLeftMotor.setPower(1.0);
-            robot.intakeRightMotor.setPower(0.8);
+            robot.intakeRightMotor.setPower(0.6);
         }
 
         // Intake OUT
@@ -195,7 +195,7 @@ public class TeleOpDM18 extends OpMode {
         }
 
         // Intake STOP
-        if (gamepad1.right_bumper || gamepad1.left_bumper) {
+        if (gamepad1.a) {
             robot.intakeLeftMotor.setPower(0.0);
             robot.intakeRightMotor.setPower(0.0);
         }

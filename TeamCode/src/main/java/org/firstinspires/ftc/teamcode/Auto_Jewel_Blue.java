@@ -114,10 +114,10 @@ public class Auto_Jewel_Blue extends LinearOpMode {
     double                  headingBias = 0.0;            // Gyro heading adjustment
 
     // Color Sensor Values
-    static final double     BLUE_MIN                = -140;
-    static final double     BLUE_MAX                = -180;
-    static final double     RED_MIN                 = -20;
-    static final double     RED_MAX                 = 20;
+    static final double     BLUE_MIN                = -180.0;
+    static final double     BLUE_MAX                = -140.0;
+    static final double     RED_MIN                 = -20.0;
+    static final double     RED_MAX                 = 20.0;
 
     // Storage for reading adaFruit color sensor for beacon sensing
     // adaHSV is an array that will hold the hue, saturation, and value information.
@@ -288,9 +288,14 @@ public class Auto_Jewel_Blue extends LinearOpMode {
 
         telemetry.addData("VuMark", "%s visible", vuMark);
 
-       if (vuMark == RelicRecoveryVuMark.CENTER) {
+
+       if (vuMark == RelicRecoveryVuMark.CENTER || vuMark == RelicRecoveryVuMark.UNKNOWN) {
            // Drive forward to lineup with center crytoglyh
-           encoderDrive(0.5, 32.0, 5.0, false, 0.0);
+           if (iAmBlue()) {
+               encoderDrive(0.5, 32.0, 5.0, false, 0.0);
+           } else {
+               encoderDrive(0.5, -36.0, 5.0, false, 0.0);
+           }
            // Turn toward center cryptoglph
            gyroTurn(0.8, 90, P_TURN_COEFF);
            // Drive closer to center crytoglyph
@@ -304,7 +309,11 @@ public class Auto_Jewel_Blue extends LinearOpMode {
        }
         if (vuMark == RelicRecoveryVuMark.RIGHT) {
             // Drive forward to lineup with center crytoglyh
-            encoderDrive(0.5, (32.0+7.5), 5.0, false, 0.0);
+            if (iAmBlue()) {
+                encoderDrive(0.5, 32.0+7.5, 5.0, false, 0.0);
+            } else {
+                encoderDrive(0.5, -36.0+7.5, 5.0, false, 0.0);
+            }
             // Turn toward center cryptoglph
             gyroTurn(0.8, 90, P_TURN_COEFF);
             // Drive closer to center crytoglyph
@@ -318,11 +327,16 @@ public class Auto_Jewel_Blue extends LinearOpMode {
         }
         if (vuMark == RelicRecoveryVuMark.LEFT) {
             // Drive forward to lineup with center crytoglyh
-            encoderDrive(0.5, (32.0-7.5), 5.0, false, 0.0);
+            if (iAmBlue()) {
+                encoderDrive(0.5, 32.0-7.5, 5.0, false, 0.0);
+            } else {
+                encoderDrive(0.5, -36.0-7.5, 5.0, false, 0.0);
+            }
             // Turn toward center cryptoglph
             gyroTurn(0.8, 90, P_TURN_COEFF);
             // Drive closer to center crytoglyph
-            encoderDrive(0.5, 9, 3.0, false, 90);
+            encoderDrive(0.5, 9.5, 3.0, false, 90);
+            sleep(1000);
             // Outake glyph
             robot.intakeLeftMotor.setPower(-1.0);
             robot.intakeRightMotor.setPower(-1.0);
@@ -708,8 +722,10 @@ public class Auto_Jewel_Blue extends LinearOpMode {
             adaHSV[0] -= 360.0;
         }
 
+        telemetry.addData("Hue: ", adaHSV[0]);
+        telemetry.update();
         // Check for blue
-        if (adaHSV[0] > BLUE_MIN && adaHSV[0] < BLUE_MAX) {
+        if ((adaHSV[0] > BLUE_MIN) && (adaHSV[0] < BLUE_MAX)) {
             // we see blue so return 1.0
             RobotLog.i("DM10337- Jewel color found blue alpha. Hue:" + adaHSV[0] );
             return 1;
