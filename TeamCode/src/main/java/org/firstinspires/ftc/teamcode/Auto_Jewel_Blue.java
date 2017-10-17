@@ -290,15 +290,15 @@ public class Auto_Jewel_Blue extends LinearOpMode {
 
 
        if (vuMark == RelicRecoveryVuMark.CENTER || vuMark == RelicRecoveryVuMark.UNKNOWN) {
-           // Drive forward to lineup with center crytoglyh
+           // Drive forward to lineup with center cryptoglyph
            if (iAmBlue()) {
                encoderDrive(0.5, 32.0, 5.0, false, 0.0);
            } else {
                encoderDrive(0.5, -36.0, 5.0, false, 0.0);
            }
-           // Turn toward center cryptoglph
+           // Turn toward center cryptoglyph
            gyroTurn(0.8, 90, P_TURN_COEFF);
-           // Drive closer to center crytoglyph
+           // Drive closer to center cryptoglyph
            encoderDrive(0.5, 9.5, 3.0, false, 90);
            // Outake glyph
            robot.intakeLeftMotor.setPower(-1.0);
@@ -308,15 +308,15 @@ public class Auto_Jewel_Blue extends LinearOpMode {
            robot.intakeRightMotor.setPower(0.0);
        }
         if (vuMark == RelicRecoveryVuMark.RIGHT) {
-            // Drive forward to lineup with center crytoglyh
+            // Drive forward to lineup with center cryptoglyph
             if (iAmBlue()) {
                 encoderDrive(0.5, 32.0+7.5, 5.0, false, 0.0);
             } else {
                 encoderDrive(0.5, -36.0+7.5, 5.0, false, 0.0);
             }
-            // Turn toward center cryptoglph
+            // Turn toward center cryptoglyph
             gyroTurn(0.8, 90, P_TURN_COEFF);
-            // Drive closer to center crytoglyph
+            // Drive closer to center cryptoglyph
             encoderDrive(0.5, 9.5, 3.0, false, 90);
             // Outake glyph
             robot.intakeLeftMotor.setPower(-1.0);
@@ -326,15 +326,15 @@ public class Auto_Jewel_Blue extends LinearOpMode {
             robot.intakeRightMotor.setPower(0.0);
         }
         if (vuMark == RelicRecoveryVuMark.LEFT) {
-            // Drive forward to lineup with center crytoglyh
+            // Drive forward to lineup with center cryptoglyph
             if (iAmBlue()) {
                 encoderDrive(0.5, 32.0-7.5, 5.0, false, 0.0);
             } else {
                 encoderDrive(0.5, -36.0-7.5, 5.0, false, 0.0);
             }
-            // Turn toward center cryptoglph
+            // Turn toward center cryptoglyph
             gyroTurn(0.8, 90, P_TURN_COEFF);
-            // Drive closer to center crytoglyph
+            // Drive closer to center cryptoglyph
             encoderDrive(0.5, 9.5, 3.0, false, 90);
             sleep(1000);
             // Outake glyph
@@ -347,21 +347,33 @@ public class Auto_Jewel_Blue extends LinearOpMode {
 
         sleep(1000);
 
-        // Pull intake wheels back into release position before backing off crytoglyh
+        // Pull intake wheels back into release position before backing off cryptoglyph
         robot.intakeLeftServo.setPosition(robot.INTAKE_LEFT_RELEASE);
         robot.intakeRightServo.setPosition(robot.INTAKE_RIGHT_RELEASE);
 
         sleep(500);
 
         // Drive back, but stay in safe zone
-        encoderDrive(0.5, -5.0, 3.0, false, 90);
+        encoderDrive(0.6, -15.0, 3.0, true, 90);
 
-        sleep(2000);
-        // Pull intake wheels back into release position before backing off crytoglyh
+        sleep(500);
+        // Pull intake wheels back into release position before backing off cryptoglyph
         robot.intakeLeftServo.setPosition(robot.INTAKE_LEFT_HOME);
         robot.intakeRightServo.setPosition(robot.INTAKE_RIGHT_HOME);
+        gyroTurn(0.8, -90, P_TURN_COEFF);
 
+        int left1Pos = robot.leftDrive1.getCurrentPosition();
+        int left2Pos = robot.leftDrive2.getCurrentPosition();
+        int right1Pos = robot.rightDrive1.getCurrentPosition();
+        int right2Pos = robot.rightDrive2.getCurrentPosition();
 
+        collectGlyph(0.5, 5, true, -90);
+        sleep(500);
+
+        returnToPosition(0.5, left1Pos, left2Pos, right1Pos, right2Pos, 5.0, true, -90);
+        sleep(500);
+
+        gyroTurn(0.8, 90, P_TURN_COEFF);
 
 
 
@@ -758,6 +770,225 @@ public class Auto_Jewel_Blue extends LinearOpMode {
 
         RobotLog.i("DM10337- Jewel color found neither. Hue:" + adaHSV[0] );
         return 0;         // We didn't see either color so don't know
+    }
+
+    /**
+     * Robot drives forward while attempting to collect glyph.
+     * Robot attempts to maintain heading throughout collection procress
+     * Robot stops once glyph is retrieved
+     **/
+    public void collectGlyph (double speed, int timeout, boolean useGyro, double heading) {
+
+        robot.intakeLeftMotor.setPower(1.0);
+        robot.intakeRightMotor.setPower(0.6);
+
+        // The potentially adjusted current target heading
+        double curHeading = heading;
+
+        // Speed ramp on start of move to avoid wheel slip
+        final double MINSPEED = 0.30;           // Start at this power
+        final double SPEEDINCR = 0.015;         // And increment by this much each cycle
+        double curSpeed;                        // Keep track of speed as we ramp
+
+        // reset the timeout time and start motion.
+        runtime.reset();
+
+        speed = Math.abs(speed);    // Make sure its positive
+        curSpeed = Math.min(MINSPEED,speed);
+
+        // Set the motors to the starting power
+        robot.leftDrive1.setPower(Math.abs(curSpeed));
+        robot.rightDrive1.setPower(Math.abs(curSpeed));
+        robot.leftDrive2.setPower(Math.abs(curSpeed));
+        robot.rightDrive2.setPower(Math.abs(curSpeed));
+
+        // keep looping while we are still active, and there is time left, until distance sensor detects glyph in intake
+
+        boolean stop = false;
+
+        while (opModeIsActive() && (runtime.seconds() < timeout) && !stop) {
+
+            if (robot.jewelDS.getDistance(DistanceUnit.CM) < 7) stop = true;
+
+            // Ramp up motor powers as needed
+            if (curSpeed < speed) {
+                curSpeed += SPEEDINCR;
+            }
+            double leftSpeed = curSpeed;
+            double rightSpeed = curSpeed;
+
+            // Doing gyro heading correction?
+            if (useGyro){
+
+                // adjust relative speed based on heading
+                double error = getError(curHeading);
+                double steer = getSteer(error, P_DRIVE_COEFF_1);
+
+                // if driving in reverse, the motor correction also needs to be reversed
+                //if (distance < 0)
+                //    steer *= -1.0;
+
+                // Adjust motor powers for heading correction
+                leftSpeed -= steer;
+                rightSpeed += steer;
+
+                // Normalize speeds if any one exceeds +/- 1.0;
+                double max = Math.max(Math.abs(leftSpeed), Math.abs(rightSpeed));
+                if (max > 1.0)
+                {
+                    leftSpeed /= max;
+                    rightSpeed /= max;
+                }
+
+            }
+
+            // And rewrite the motor speeds
+            robot.leftDrive1.setPower(Math.abs(leftSpeed));
+            robot.rightDrive1.setPower(Math.abs(rightSpeed));
+            robot.leftDrive2.setPower(Math.abs(leftSpeed));
+            robot.rightDrive2.setPower(Math.abs(rightSpeed));
+
+            // Allow time for other processes to run.
+            idle();
+        }
+
+        robot.intakeLeftMotor.setPower(0.0);
+        robot.intakeRightMotor.setPower(0.0);
+        robot.leftDrive1.setPower(0.0);
+        robot.leftDrive2.setPower(0.0);
+        robot.rightDrive1.setPower(0.0);
+        robot.rightDrive2.setPower(0.0);
+
+    }
+
+    /**
+     * Robot returns to designatied encoder position
+     **/
+    public void returnToPosition(double speed,
+                                 int left1Pos,
+                                 int left2Pos,
+                                 int right1Pos,
+                                 int right2Pos,
+                                 double timeout,
+                                 boolean useGyro,
+                                 double heading) throws InterruptedException {
+
+
+        // The potentially adjusted current target heading
+        double curHeading = heading;
+
+        // Speed ramp on start of move to avoid wheel slip
+        final double MINSPEED = 0.30;           // Start at this power
+        final double SPEEDINCR = 0.015;         // And increment by this much each cycle
+        double curSpeed;                        // Keep track of speed as we ramp
+
+        int averageOriginalPos = (robot.leftDrive1.getCurrentPosition() + robot.leftDrive2.getCurrentPosition() + robot.rightDrive1.getCurrentPosition() + robot.rightDrive2.getCurrentPosition())/4;
+        int averageNewPos = (left1Pos + left2Pos + right1Pos + right2Pos)/4;
+        int difference = averageNewPos - averageOriginalPos;
+
+        // Ensure that the opmode is still active
+        if (opModeIsActive()) {
+
+
+            while(robot.leftDrive1.getTargetPosition() != left1Pos){
+                robot.leftDrive1.setTargetPosition(left1Pos);
+                sleep(1);
+            }
+            while(robot.rightDrive1.getTargetPosition() != right1Pos){
+                robot.rightDrive1.setTargetPosition(right1Pos);
+                sleep(1);
+            }
+            while(robot.leftDrive2.getTargetPosition() != left2Pos){
+                robot.leftDrive2.setTargetPosition(left2Pos);
+                sleep(1);
+            }
+            while(robot.rightDrive2.getTargetPosition() != right2Pos){
+                robot.rightDrive2.setTargetPosition(right2Pos);
+                sleep(1);
+            }
+
+            // Turn On motors to RUN_TO_POSITION
+            robot.setDriveMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+            // reset the timeout time and start motion.
+            runtime.reset();
+
+            speed = Math.abs(speed);    // Make sure its positive
+            curSpeed = Math.min(MINSPEED,speed);
+
+            // Set the motors to the starting power
+            robot.leftDrive1.setPower(Math.abs(curSpeed));
+            robot.rightDrive1.setPower(Math.abs(curSpeed));
+            robot.leftDrive2.setPower(Math.abs(curSpeed));
+            robot.rightDrive2.setPower(Math.abs(curSpeed));
+
+            // keep looping while we are still active, and there is time left, until at least 1 motor reaches target
+            while (opModeIsActive() &&
+                    (runtime.seconds() < timeout) &&
+                    robot.leftDrive1.isBusy() &&
+                    robot.leftDrive2.isBusy() &&
+                    robot.rightDrive1.isBusy() &&
+                    robot.rightDrive2.isBusy()) {
+
+                // Ramp up motor powers as needed
+                if (curSpeed < speed) {
+                    curSpeed += SPEEDINCR;
+                }
+                double leftSpeed = curSpeed;
+                double rightSpeed = curSpeed;
+
+                // Doing gyro heading correction?
+                if (useGyro){
+
+                    // adjust relative speed based on heading
+                    double error = getError(curHeading);
+                    double steer = getSteer(error, P_DRIVE_COEFF_1);
+
+                    // if driving in reverse, the motor correction also needs to be reversed
+                    if (difference < 0)
+                        steer *= -1.0;
+
+                    // Adjust motor powers for heading correction
+                    leftSpeed -= steer;
+                    rightSpeed += steer;
+
+                    // Normalize speeds if any one exceeds +/- 1.0;
+                    double max = Math.max(Math.abs(leftSpeed), Math.abs(rightSpeed));
+                    if (max > 1.0)
+                    {
+                        leftSpeed /= max;
+                        rightSpeed /= max;
+                    }
+
+                }
+
+                // And rewrite the motor speeds
+                robot.leftDrive1.setPower(Math.abs(leftSpeed));
+                robot.rightDrive1.setPower(Math.abs(rightSpeed));
+                robot.leftDrive2.setPower(Math.abs(leftSpeed));
+                robot.rightDrive2.setPower(Math.abs(rightSpeed));
+
+                // Allow time for other processes to run.
+                idle();
+            }
+
+
+            RobotLog.i("DM10337- encoderDrive done" +
+                    "  lftarget: " +left1Pos + "  lfactual:" + robot.leftDrive1.getCurrentPosition() +
+                    "  lrtarget: " +left2Pos+ "  lractual:" + robot.leftDrive2.getCurrentPosition() +
+                    "  rftarget: " +right1Pos+ "  rfactual:" + robot.rightDrive1.getCurrentPosition() +
+                    "  rrtarget: " +right2Pos+ "  rractual:" + robot.rightDrive2.getCurrentPosition() +
+                    "  heading:" + readGyro());
+
+            // Stop all motion;
+            robot.leftDrive1.setPower(0);
+            robot.rightDrive1.setPower(0);
+            robot.leftDrive2.setPower(0);
+            robot.rightDrive2.setPower(0);
+
+            // Turn off RUN_TO_POSITION
+            robot.setDriveMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        }
     }
 
     public boolean iAmBlue() {

@@ -243,5 +243,60 @@ public class HardwareDM18
     }
 
 
+    public void intakeOpen() {
+        intakeLeftServo.setPosition(INTAKE_LEFT_RELEASE);
+        intakeRightServo.setPosition(INTAKE_RIGHT_RELEASE);
+    }
+
+    public void intakeClose()
+
+    {
+        intakeLeftServo.setPosition(INTAKE_LEFT_HOME);
+        intakeRightServo.setPosition(INTAKE_RIGHT_HOME);
+    }
+
+    public void intakeIn() {
+        intakeLeftMotor.setPower(1.0);
+        intakeRightMotor.setPower(0.6);
+    }
+
+    public void intakeStop() {
+        intakeLeftMotor.setPower(0.0);
+        intakeRightMotor.setPower(0.0);
+    }
+
+    public void intakeOut() {
+        intakeLeftMotor.setPower(-1.0);
+        intakeRightMotor.setPower(-1.0);
+    }
+
+    public void pusherIn() {
+        // To be added
+    }
+
+    public void pusherOut() {
+        // To be added
+    }
+
+    public void liftFloor0() {
+        // Code to move lift to floor 0
+    }
+
+    public void liftFloor1() {
+        // Code to move lift to floor 1
+    }
+
+    public void liftFloor2() {
+        // Code to move lift to floor 2
+    }
+
+    public boolean reachedFloor() {
+        // return if reached our destination
+        return true;
+    }
+
+
+}
+
 }
 
