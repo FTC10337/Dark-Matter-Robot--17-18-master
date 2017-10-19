@@ -33,7 +33,6 @@ import com.qualcomm.hardware.adafruit.AdafruitBNO055IMU;
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
@@ -71,8 +70,8 @@ public class HardwareDM18
 
     public Servo    jewelServo       = null;
     public Servo    jewelRotServo    = null;
-    public Servo    gripTopServo     = null;
-    public Servo    gripBottomServo  = null;
+    public Servo    gripPurpleServo   = null;
+    public Servo    gripBlackServo  = null;
     public Servo    gripRotateServo  = null;
     public Servo    gripExtendServo  = null;
     public Servo    intakeLeftServo  = null;
@@ -90,10 +89,8 @@ public class HardwareDM18
     public final static double JEWEL_ROT_FWD = 0.62;
     public final static double JEWEL_ROT_REV = 0.42;
 
-    public final static double GRIP_TOP_OPEN = 0.0;
-    public final static double GRIP_TOP_CLOSED = 1.0;
-    public final static double GRIP_BOTTOM_OPEN = 0.0;
-    public final static double GRIP_BOTTOM_CLOSED = 1.0;
+    public final static double GRIP_OPEN = 0.0;
+    public final static double GRIP_CLOSED = 1.0;
     public final static double GRIP_ROTATE_NORMAL = 0.0;
     public final static double GRIP_ROTATE_FLIPPED = 1.0;
     public final static double GRIP_EXTEND_HOME = 0.0;
@@ -111,6 +108,17 @@ public class HardwareDM18
     static final double     WHEEL_DIAMETER_INCHES   = 4.0 ;     // For figuring circumference
     static final double     COUNTS_PER_INCH         = (4 * COUNTS_PER_MOTOR_REV * DRIVE_GEAR_REDUCTION) /
             (WHEEL_DIAMETER_INCHES * 3.1415);
+
+
+    /* Intake state variables */
+    boolean isIntakeClosed = true;
+    boolean isIntakeInOn = false;
+    boolean isIntakeOutOn = false;
+
+    /* Gripper state variables */
+    Servo topGrip = null;
+    Servo botGrip = null;
+    boolean isGripFlipped = false;
 
     /* local OpMode members. */
     HardwareMap hwMap           =  null;
@@ -172,23 +180,22 @@ public class HardwareDM18
         // Define and initialize ALL installed servos.
         jewelServo = hwMap.servo.get("jewel");
         jewelRotServo = hwMap.servo.get("jewelRot");
-        gripTopServo = hwMap.servo.get("gripTop");
-        gripBottomServo = hwMap.servo.get("gripBottom");
+        gripPurpleServo = hwMap.servo.get("gripTop");
+        gripBlackServo = hwMap.servo.get("gripBottom");
+        topGrip = gripPurpleServo;  // We start w/ purple grip on top
+        botGrip = gripBlackServo;   // And black grip on bottom
         gripRotateServo = hwMap.servo.get("gripRotate");
         gripExtendServo = hwMap.servo.get("gripExtend");
         intakeLeftServo = hwMap.servo.get("ils");
         intakeRightServo = hwMap.servo.get("irs");
 
-
-
         // Set init positions of servos
         jewelServo.setPosition(JEWEL_HOME);
         jewelRotServo.setPosition(JEWEL_ROT_HOME);
-        gripTopServo.setPosition(GRIP_TOP_OPEN);
-        gripBottomServo.setPosition(GRIP_BOTTOM_OPEN);
-        gripRotateServo.setPosition(GRIP_ROTATE_NORMAL);
-        intakeLeftServo.setPosition(INTAKE_LEFT_HOME);
-        intakeRightServo.setPosition(INTAKE_RIGHT_HOME);
+        initGripFlip();
+        topGripClose();
+        botGripClose();
+        intakeClose();
 
         // Define color sensor
         jewelCS = hwMap.colorSensor.get("cs");
@@ -249,7 +256,6 @@ public class HardwareDM18
     }
 
     public void intakeClose()
-
     {
         intakeLeftServo.setPosition(INTAKE_LEFT_HOME);
         intakeRightServo.setPosition(INTAKE_RIGHT_HOME);
@@ -296,7 +302,45 @@ public class HardwareDM18
     }
 
 
-}
+    public void flipGrips() {
+        if (isGripFlipped) {
+            gripRotateServo.setPosition(GRIP_ROTATE_NORMAL);
+            isGripFlipped = false;
+            topGrip = gripPurpleServo;
+            botGrip = gripBlackServo;
+        } else {
+            gripRotateServo.setPosition(GRIP_ROTATE_FLIPPED);
+            isGripFlipped = true;
+            topGrip = gripBlackServo;
+            botGrip = gripPurpleServo;
+        }
+    }
+
+    public void initGripFlip() {
+        gripRotateServo.setPosition(GRIP_ROTATE_NORMAL);
+        isGripFlipped = false;
+        topGrip = gripPurpleServo;
+        botGrip = gripBlackServo;
+    }
+
+
+    public void topGripOpen() {
+        topGrip.setPosition(GRIP_OPEN);
+    }
+
+    public void botGripOpen() {
+        botGrip.setPosition(GRIP_OPEN);
+    }
+
+    public void topGripClose() {
+        topGrip.setPosition(GRIP_CLOSED);
+    }
+
+    public void botGripClose() {
+        botGrip.setPosition(GRIP_CLOSED);
+    }
+
+
 
 }
 

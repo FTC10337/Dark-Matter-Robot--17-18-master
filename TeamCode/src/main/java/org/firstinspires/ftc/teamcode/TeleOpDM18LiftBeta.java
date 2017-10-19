@@ -33,8 +33,6 @@ import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.Range;
 
-import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
-
 /**
  * This file provides basic Telop driving for a Pushbot robot.
  * The code is structured as an Iterative OpMode
@@ -141,16 +139,14 @@ public class TeleOpDM18LiftBeta extends OpMode {
                 }
                 break;
             }
-            case 1:  {  // Ready to intake
+            case 1: {  // Ready to intake
                 if (curState != lastState) {
-                    robot.gripBottomServo.setPosition(robot.GRIP_BOTTOM_OPEN);
-                    robot.gripTopServo.setPosition(robot.GRIP_TOP_OPEN);
-                    robot.intakeRightServo.setPosition(robot.INTAKE_RIGHT_HOME);
-                    robot.intakeLeftServo.setPosition(robot.INTAKE_LEFT_RELEASE);
-                    robot.intakeLeftMotor.setPower(1.0);
-                    robot.intakeRightMotor.setPower(0.6);
-
+                    robot.topGripOpen();
+                    robot.botGripOpen();
+                    robot.intakeClose();
+                    robot.intakeIn();
                 }
+            }
         }
 
 

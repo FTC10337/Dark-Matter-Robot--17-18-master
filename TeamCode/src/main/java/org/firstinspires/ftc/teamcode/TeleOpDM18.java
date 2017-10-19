@@ -97,12 +97,12 @@ public class TeleOpDM18 extends OpMode {
     @Override
     public void loop() {
 
-        double jewel_pos = robot.jewelServo.getPosition();
-        double jewel_rot_pos = robot.jewelRotServo.getPosition();
-        double grip_top_pos = robot.gripTopServo.getPosition();
-        double grip_bottom_pos = robot.gripBottomServo.getPosition();
-        double intake_left_pos = robot.intakeLeftServo.getPosition();
-        double intake_right_pos = robot.intakeRightServo.getPosition();
+        //double jewel_pos = robot.jewelServo.getPosition();
+        //double jewel_rot_pos = robot.jewelRotServo.getPosition();
+        //double grip_top_pos = robot.gripTopServo.getPosition();
+        //double grip_bottom_pos = robot.gripBottomServo.getPosition();
+        //double intake_left_pos = robot.intakeLeftServo.getPosition();
+        //double intake_right_pos = robot.intakeRightServo.getPosition();
         telemetry.addData("Dist: ", robot.jewelDS.getDistance(DistanceUnit.CM));
         //telemetry.addData("left Pos: ", intake_left_pos);
         //telemetry.addData("right Pos: ", intake_right_pos);
@@ -173,7 +173,7 @@ public class TeleOpDM18 extends OpMode {
         if (gamepad1.left_bumper) grip_top_pos+=0.01;
         if (gamepad1.right_bumper) grip_top_pos-=0.01;
 
-        grip_top_pos = Range.clip(grip_top_pos, robot.GRIP_TOP_OPEN, robot.GRIP_TOP_CLOSED);
+        grip_top_pos = Range.clip(grip_top_pos, robot.GRIP_OPEN, robot.GRIP_TOP_CLOSED);
         robot.gripTopServo.setPosition(grip_top_pos);
 
         if (gamepad2.left_bumper) grip_bottom_pos+=0.01;
