@@ -37,6 +37,7 @@ import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
+import com.qualcomm.robotcore.util.RobotLog;
 
 
 /**
@@ -65,17 +66,12 @@ public class HardwareDM18
 
     public DcMotor  liftMotor    = null;
 
-    public DcMotor  intakeLeftMotor   = null;
-    public DcMotor  intakeRightMotor  = null;
-
     public Servo    jewelServo       = null;
     public Servo    jewelRotServo    = null;
-    public Servo    gripPurpleServo   = null;
-    public Servo    gripBlackServo  = null;
-    public Servo    gripRotateServo  = null;
+    //public Servo    purpleGrip   = null;
+    //public Servo    blackGrip  = null;
+    //public Servo    rotateServo  = null;
     public Servo    gripExtendServo  = null;
-    public Servo    intakeLeftServo  = null;
-    public Servo    intakeRightServo = null;
 
 
     public ColorSensor  jewelCS = null;
@@ -89,17 +85,13 @@ public class HardwareDM18
     public final static double JEWEL_ROT_FWD = 0.62;
     public final static double JEWEL_ROT_REV = 0.42;
 
-    public final static double GRIP_OPEN = 0.0;
-    public final static double GRIP_CLOSED = 1.0;
-    public final static double GRIP_ROTATE_NORMAL = 0.0;
-    public final static double GRIP_ROTATE_FLIPPED = 1.0;
+    //public final static double GRIP_OPEN = 0.0;
+    //public final static double GRIP_CLOSED = 1.0;
+    //public final static double GRIP_ROTATE_NORMAL = 0.0;
+    //public final static double GRIP_ROTATE_FLIPPED = 1.0;
     public final static double GRIP_EXTEND_HOME = 0.0;
     public final static double GRIP_EXTEND_OUT = 1.0;
 
-    public final static double INTAKE_LEFT_HOME = 0.94;
-    public final static double INTAKE_LEFT_RELEASE = 0.61;
-    public final static double INTAKE_RIGHT_HOME = 0.11;
-    public final static double INTAKE_RIGHT_RELEASE = 0.32;
 
 
     /* Drive train constants */
@@ -110,10 +102,12 @@ public class HardwareDM18
             (WHEEL_DIAMETER_INCHES * 3.1415);
 
 
-    /* Intake state variables */
-    boolean isIntakeClosed = true;
-    boolean isIntakeInOn = false;
-    boolean isIntakeOutOn = false;
+    // Intake
+    public Intake intake = new Intake();
+
+
+    // Gripper
+    public Gripper gripper = new Gripper();
 
     /* Gripper state variables */
     Servo topGrip = null;
@@ -145,16 +139,13 @@ public class HardwareDM18
         leftDrive2.setDirection(DcMotor.Direction.REVERSE); // Set to REVERSE if using AndyMark motors
         rightDrive2.setDirection(DcMotor.Direction.FORWARD);// Set to FORWARD if using AndyMark motors
 
+        // Setup intake mapped to hardware
+        intake.init(hwMap, "intakeLeft", "intakeRight", "ils", "irs");
 
-        // Define and Initialize intake Motors
-        intakeLeftMotor = hwMap.dcMotor.get("intakeLeft");
-        intakeRightMotor = hwMap.dcMotor.get("intakeRight");
-
-        intakeLeftMotor.setDirection(DcMotor.Direction.REVERSE);
-        intakeRightMotor.setDirection(DcMotor.Direction.FORWARD);
+        // Setup gripper mapped to hardware
+        gripper.init(hwMap, "gripTop", "gripBottom", "gripRotate");
 
         // Define lift motor
-
         liftMotor = hwMap.dcMotor.get("lift");
 
         liftMotor.setDirection(DcMotor.Direction.FORWARD);
@@ -164,8 +155,6 @@ public class HardwareDM18
         rightDrive1.setPower(0);
         leftDrive2.setPower(0);
         rightDrive2.setPower(0);
-        intakeRightMotor.setPower(0);
-        intakeLeftMotor.setPower(0);
 
         // Set all motors to run without encoders.
         // May want to use RUN_USING_ENCODERS if encoders are installed.
@@ -174,28 +163,23 @@ public class HardwareDM18
         leftDrive2.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         rightDrive2.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
-        intakeLeftMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        intakeRightMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
         // Define and initialize ALL installed servos.
         jewelServo = hwMap.servo.get("jewel");
         jewelRotServo = hwMap.servo.get("jewelRot");
-        gripPurpleServo = hwMap.servo.get("gripTop");
-        gripBlackServo = hwMap.servo.get("gripBottom");
-        topGrip = gripPurpleServo;  // We start w/ purple grip on top
-        botGrip = gripBlackServo;   // And black grip on bottom
-        gripRotateServo = hwMap.servo.get("gripRotate");
         gripExtendServo = hwMap.servo.get("gripExtend");
-        intakeLeftServo = hwMap.servo.get("ils");
-        intakeRightServo = hwMap.servo.get("irs");
 
         // Set init positions of servos
         jewelServo.setPosition(JEWEL_HOME);
         jewelRotServo.setPosition(JEWEL_ROT_HOME);
-        initGripFlip();
-        topGripClose();
-        botGripClose();
-        intakeClose();
+
+        // Set gripper not flipped and closed
+        gripper.setFlipped(false);
+        gripper.setBothClosed();
+
+        // Set intake to closed and stopped
+        intake.setClosed();
+        intake.setStop();
 
         // Define color sensor
         jewelCS = hwMap.colorSensor.get("cs");
@@ -250,31 +234,6 @@ public class HardwareDM18
     }
 
 
-    public void intakeOpen() {
-        intakeLeftServo.setPosition(INTAKE_LEFT_RELEASE);
-        intakeRightServo.setPosition(INTAKE_RIGHT_RELEASE);
-    }
-
-    public void intakeClose()
-    {
-        intakeLeftServo.setPosition(INTAKE_LEFT_HOME);
-        intakeRightServo.setPosition(INTAKE_RIGHT_HOME);
-    }
-
-    public void intakeIn() {
-        intakeLeftMotor.setPower(1.0);
-        intakeRightMotor.setPower(0.6);
-    }
-
-    public void intakeStop() {
-        intakeLeftMotor.setPower(0.0);
-        intakeRightMotor.setPower(0.0);
-    }
-
-    public void intakeOut() {
-        intakeLeftMotor.setPower(-1.0);
-        intakeRightMotor.setPower(-1.0);
-    }
 
     public void pusherIn() {
         // To be added
@@ -300,46 +259,6 @@ public class HardwareDM18
         // return if reached our destination
         return true;
     }
-
-
-    public void flipGrips() {
-        if (isGripFlipped) {
-            gripRotateServo.setPosition(GRIP_ROTATE_NORMAL);
-            isGripFlipped = false;
-            topGrip = gripPurpleServo;
-            botGrip = gripBlackServo;
-        } else {
-            gripRotateServo.setPosition(GRIP_ROTATE_FLIPPED);
-            isGripFlipped = true;
-            topGrip = gripBlackServo;
-            botGrip = gripPurpleServo;
-        }
-    }
-
-    public void initGripFlip() {
-        gripRotateServo.setPosition(GRIP_ROTATE_NORMAL);
-        isGripFlipped = false;
-        topGrip = gripPurpleServo;
-        botGrip = gripBlackServo;
-    }
-
-
-    public void topGripOpen() {
-        topGrip.setPosition(GRIP_OPEN);
-    }
-
-    public void botGripOpen() {
-        botGrip.setPosition(GRIP_OPEN);
-    }
-
-    public void topGripClose() {
-        topGrip.setPosition(GRIP_CLOSED);
-    }
-
-    public void botGripClose() {
-        botGrip.setPosition(GRIP_CLOSED);
-    }
-
 
 
 }

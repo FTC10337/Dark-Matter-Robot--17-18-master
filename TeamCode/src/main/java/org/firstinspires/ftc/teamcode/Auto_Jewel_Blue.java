@@ -301,11 +301,9 @@ public class Auto_Jewel_Blue extends LinearOpMode {
            // Drive closer to center cryptoglyph
            encoderDrive(0.5, 9.5, 3.0, false, 90);
            // Outake glyph
-           robot.intakeLeftMotor.setPower(-1.0);
-           robot.intakeRightMotor.setPower(-1.0);
+           robot.intake.setOut();
            sleep(500);
-           robot.intakeLeftMotor.setPower(0.0);
-           robot.intakeRightMotor.setPower(0.0);
+           robot.intake.setStop();
        }
         if (vuMark == RelicRecoveryVuMark.RIGHT) {
             // Drive forward to lineup with center cryptoglyph
@@ -319,11 +317,9 @@ public class Auto_Jewel_Blue extends LinearOpMode {
             // Drive closer to center cryptoglyph
             encoderDrive(0.5, 9.5, 3.0, false, 90);
             // Outake glyph
-            robot.intakeLeftMotor.setPower(-1.0);
-            robot.intakeRightMotor.setPower(-1.0);
+            robot.intake.setOut();
             sleep(500);
-            robot.intakeLeftMotor.setPower(0.0);
-            robot.intakeRightMotor.setPower(0.0);
+            robot.intake.setStop();
         }
         if (vuMark == RelicRecoveryVuMark.LEFT) {
             // Drive forward to lineup with center cryptoglyph
@@ -338,18 +334,15 @@ public class Auto_Jewel_Blue extends LinearOpMode {
             encoderDrive(0.5, 9.5, 3.0, false, 90);
             sleep(1000);
             // Outake glyph
-            robot.intakeLeftMotor.setPower(-1.0);
-            robot.intakeRightMotor.setPower(-1.0);
+            robot.intake.setOut();
             sleep(500);
-            robot.intakeLeftMotor.setPower(0.0);
-            robot.intakeRightMotor.setPower(0.0);
+            robot.intake.setStop();
         }
 
         sleep(1000);
 
         // Pull intake wheels back into release position before backing off cryptoglyph
-        robot.intakeLeftServo.setPosition(robot.INTAKE_LEFT_RELEASE);
-        robot.intakeRightServo.setPosition(robot.INTAKE_RIGHT_RELEASE);
+        robot.intake.setOpen();
 
         sleep(500);
 
@@ -357,9 +350,7 @@ public class Auto_Jewel_Blue extends LinearOpMode {
         encoderDrive(0.6, -15.0, 3.0, true, 90);
 
         sleep(500);
-        // Pull intake wheels back into release position before backing off cryptoglyph
-        robot.intakeLeftServo.setPosition(robot.INTAKE_LEFT_HOME);
-        robot.intakeRightServo.setPosition(robot.INTAKE_RIGHT_HOME);
+
         gyroTurn(0.8, -90, P_TURN_COEFF);
 
         int left1Pos = robot.leftDrive1.getCurrentPosition();
@@ -779,8 +770,7 @@ public class Auto_Jewel_Blue extends LinearOpMode {
      **/
     public void collectGlyph (double speed, int timeout, boolean useGyro, double heading) {
 
-        robot.intakeLeftMotor.setPower(1.0);
-        robot.intakeRightMotor.setPower(0.6);
+        robot.intake.setIn();
 
         // The potentially adjusted current target heading
         double curHeading = heading;
@@ -852,8 +842,7 @@ public class Auto_Jewel_Blue extends LinearOpMode {
             idle();
         }
 
-        robot.intakeLeftMotor.setPower(0.0);
-        robot.intakeRightMotor.setPower(0.0);
+        robot.intake.setStop();
         robot.leftDrive1.setPower(0.0);
         robot.leftDrive2.setPower(0.0);
         robot.rightDrive1.setPower(0.0);

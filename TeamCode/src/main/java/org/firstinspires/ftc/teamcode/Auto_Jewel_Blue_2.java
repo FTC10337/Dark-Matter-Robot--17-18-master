@@ -636,8 +636,7 @@ public class Auto_Jewel_Blue_2 extends LinearOpMode {
 
     public void collectGlyph (double speed, int timeout, boolean useGyro, double heading) {
 
-        robot.intakeLeftMotor.setPower(1.0);
-        robot.intakeRightMotor.setPower(0.6);
+        robot.intake.setIn();
 
         // The potentially adjusted current target heading
         double curHeading = heading;
@@ -709,8 +708,7 @@ public class Auto_Jewel_Blue_2 extends LinearOpMode {
             idle();
         }
 
-        robot.intakeLeftMotor.setPower(0.0);
-        robot.intakeRightMotor.setPower(0.0);
+        robot.intake.setStop();
         robot.leftDrive1.setPower(0.0);
         robot.leftDrive2.setPower(0.0);
         robot.rightDrive1.setPower(0.0);

@@ -128,6 +128,12 @@ public class TeleOpDM18LiftBeta extends OpMode {
         robot.rightDrive2.setPower(right);
 
 
+        // Process the intake and gripper state model
+
+        // First we need to give intake a chance to cycle powers each cycle if needed
+        robot.intake.updateInPower();
+
+
         switch (curState) {
             case 0:  {   // Not currently intaking or placing
                 if (gamepad2.a) {
@@ -141,10 +147,9 @@ public class TeleOpDM18LiftBeta extends OpMode {
             }
             case 1: {  // Ready to intake
                 if (curState != lastState) {
-                    robot.topGripOpen();
-                    robot.botGripOpen();
-                    robot.intakeClose();
-                    robot.intakeIn();
+                    robot.gripper.setBothOpen();
+                    robot.intake.setClosed();
+                    robot.intake.setIn();
                 }
             }
         }

@@ -97,21 +97,18 @@ public class TeleOpDM18 extends OpMode {
     @Override
     public void loop() {
 
-        //double jewel_pos = robot.jewelServo.getPosition();
-        //double jewel_rot_pos = robot.jewelRotServo.getPosition();
-        //double grip_top_pos = robot.gripTopServo.getPosition();
-        //double grip_bottom_pos = robot.gripBottomServo.getPosition();
-        //double intake_left_pos = robot.intakeLeftServo.getPosition();
-        //double intake_right_pos = robot.intakeRightServo.getPosition();
-        telemetry.addData("Dist: ", robot.jewelDS.getDistance(DistanceUnit.CM));
+        // Telemetry statements for displaying & tuning servos
+        double jewel_pos = robot.jewelServo.getPosition();
+        double jewel_rot_pos = robot.jewelRotServo.getPosition();
+        double grip_top_pos = robot.gripper.getTopServoPos();
+        double grip_bottom_pos = robot.gripper.getBtmServoPos();
+        double intake_left_pos = robot.intake.getLeftServoPos();
+        double intake_right_pos = robot.intake.getRightServoPos();
+        //telemetry.addData("Dist: ", robot.jewelDS.getDistance(DistanceUnit.CM));
         //telemetry.addData("left Pos: ", intake_left_pos);
         //telemetry.addData("right Pos: ", intake_right_pos);
-        //telemetry.addData("r int enc: ", robot.intakeRightMotor.getCurrentPosition());
-        //telemetry.addData("l int enc: ", robot.intakeLeftMotor.getCurrentPosition());
-        //telemetry.addData("lDrive1: ", robot.leftDrive1.getCurrentPosition());
-        //telemetry.addData("lDrive2: ", robot.leftDrive2.getCurrentPosition());
-        //telemetry.addData("rDrive1: ", robot.rightDrive1.getCurrentPosition());
-        //telemetry.addData("rDrive2: ", robot.rightDrive2.getCurrentPosition());
+        //telemetry.addData("top Grip Pos:", grip_top_pos);
+        //telemetry.addData("btm Grip Pos:", grip_bottom_pos);
 
         telemetry.update();
 
@@ -145,19 +142,25 @@ public class TeleOpDM18 extends OpMode {
         robot.rightDrive2.setPower(right);
 
 
-        //if (gamepad1.left_bumper) intake_left_pos+=0.01;
-        //if (gamepad1.right_bumper) intake_left_pos-=0.01;
-
-        //intake_left_pos = Range.clip(intake_left_pos, robot.INTAKE_LEFT_HOME, robot.INTAKE_LEFT_RELEASE);
-        //robot.intakeLeftServo.setPosition(intake_left_pos);
-
-        //if (gamepad2.left_bumper) intake_right_pos+=0.01;
-        //if (gamepad2.right_bumper) intake_right_pos-=0.01;
-
-        //intake_right_pos= Range.clip(intake_right_pos, robot.INTAKE_RIGHT_HOME, robot.INTAKE_RIGHT_RELEASE);
-        //robot.intakeRightServo.setPosition(intake_right_pos);
-
         /*
+        // Block of code used to calibrate the intake servo position limits.
+        // Normally commented out
+
+        if (gamepad1.left_bumper) intake_left_pos+=0.01;
+        if (gamepad1.right_bumper) intake_left_pos-=0.01;
+
+        intake_left_pos = Range.clip(intake_left_pos, 0.0, 1.0);
+        robot.intake.setLeftServoPos(intake_left_pos);
+
+        if (gamepad2.left_bumper) intake_right_pos+=0.01;
+        if (gamepad2.right_bumper) intake_right_pos-=0.01;
+
+        intake_right_pos= Range.clip(intake_right_pos, 0.0, 1.0);
+        robot.intake.setRightServoPos(intake_right_pos);
+        */
+
+
+        /*  Block of code used to calibrate jewel arm
         if (gamepad1.y) jewel_pos+=0.001;
 
         if (gamepad1.a) jewel_pos-=0.001;
@@ -169,64 +172,65 @@ public class TeleOpDM18 extends OpMode {
         if (gamepad2.a) jewel_rot_pos -= 0.001;
         jewel_rot_pos = Range.clip(jewel_rot_pos, 0, 1.0);
         robot.jewelRotServo.setPosition(jewel_rot_pos);
+        */
 
+        /*  Block of code used to calibrate gripper servos
         if (gamepad1.left_bumper) grip_top_pos+=0.01;
         if (gamepad1.right_bumper) grip_top_pos-=0.01;
 
-        grip_top_pos = Range.clip(grip_top_pos, robot.GRIP_OPEN, robot.GRIP_TOP_CLOSED);
-        robot.gripTopServo.setPosition(grip_top_pos);
+        grip_top_pos = Range.clip(grip_top_pos, 0.0, 1.0);
+        robot.gripper.setTopServoPos(grip_top_pos);
 
         if (gamepad2.left_bumper) grip_bottom_pos+=0.01;
         if (gamepad2.right_bumper) grip_bottom_pos-=0.01;
 
-        grip_bottom_pos = Range.clip(grip_bottom_pos, robot.GRIP_BOTTOM_OPEN, robot.GRIP_BOTTOM_CLOSED);
-        robot.gripBottomServo.setPosition(grip_bottom_pos);
-
-        if (gamepad1.dpad_left) robot.gripRotateServo.setPosition(robot.GRIP_ROTATE_NORMAL);
-        if (gamepad1.dpad_right) robot.gripRotateServo.setPosition(robot.GRIP_ROTATE_FLIPPED);
+        grip_bottom_pos = Range.clip(grip_bottom_pos, 0.0, 1.0);
+        robot.gripper.setBtmServoPos(grip_bottom_pos);
         */
+
+
+        // Process the grip flipper
+        if (gamepad1.dpad_left) robot.gripper.flip();
+        if (gamepad1.dpad_up) robot.gripper.setFlipped(false);
+        if (gamepad1.dpad_up) robot.gripper.setFlipped(true);
+
 
         // Intake IN
         if (gamepad1.right_trigger > 0.5) {
             intake = true;
+            robot.intake.setIn();
             }
 
-
-        if (intake == true) {
-            robot.intakeLeftMotor.setPower(1.0);
-            robot.intakeRightMotor.setPower(0.6);
-            }
 
         if (intake == true && robot.jewelDS.getDistance(DistanceUnit.CM) < 7.0) {
-            robot.intakeLeftMotor.setPower(0.0);
-            robot.intakeRightMotor.setPower(0.0);
+            robot.intake.setStop();
             intake = false;
             }
 
         // Intake OUT
 
         if (gamepad1.left_trigger > 0.5) {
-            robot.intakeLeftMotor.setPower(-1.0);
-            robot.intakeRightMotor.setPower(-1.0);
+            robot.intake.setOut();
             intake = false;
             }
 
         // Intake STOP
         if (gamepad1.a) {
-            robot.intakeLeftMotor.setPower(0.0);
-            robot.intakeRightMotor.setPower(0.0);
+            robot.intake.setStop();
             intake = false;
             }
 
 
+        // Give the intake a chance to adjust speeds in cycle
+        robot.intake.updateInPower();   // Must be called each cycle for speed to vary properly
+
+
         // Intake open & close
         if (gamepad1.x) {
-            robot.intakeLeftServo.setPosition(robot.INTAKE_LEFT_HOME);
-            robot.intakeRightServo.setPosition(robot.INTAKE_RIGHT_HOME);
+            robot.intake.setClosed();
             }
         if (gamepad1.b) {
-            robot.intakeLeftServo.setPosition(robot.INTAKE_LEFT_RELEASE);
-            robot.intakeRightServo.setPosition(robot.INTAKE_RIGHT_RELEASE);
+            robot.intake.setOpen();
 
             }
 
