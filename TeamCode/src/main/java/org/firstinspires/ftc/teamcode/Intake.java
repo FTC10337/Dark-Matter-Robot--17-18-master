@@ -4,6 +4,7 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.Range;
+import com.qualcomm.robotcore.util.ElapsedTime;
 
 
 /**
@@ -22,6 +23,7 @@ public class Intake {
     final static double INTAKE_LEFT_RELEASE = 0.61;
     final static double INTAKE_RIGHT_HOME = 0.11;
     final static double INTAKE_RIGHT_RELEASE = 0.32;
+    final static double INTAKE_MOVE_TIME = 500;      // 0.5 seconds to open or close intake
     final static double MAX_IN_POWER = 1.0;
     final static double MIN_IN_POWER = 0.6;
     final static double IN_POWER_DELTA = 0.01;      // Amount to increment/decrement power per cycle
@@ -35,6 +37,9 @@ public class Intake {
     // Place to track desired left/right motor power as we cycle them
     double rInPower = 0.0;
     double lInPower = 0.0;
+
+    // Timer to tell if intake is still opening/closing
+    ElapsedTime timer = new ElapsedTime();
 
     /**
      * Constructor
@@ -77,6 +82,7 @@ public class Intake {
         intakeLeftServo.setPosition(INTAKE_LEFT_RELEASE);
         intakeRightServo.setPosition(INTAKE_RIGHT_RELEASE);
         isIntakeClosed = false;
+        timer.reset();
     }
 
     /**
@@ -87,6 +93,11 @@ public class Intake {
         intakeLeftServo.setPosition(INTAKE_LEFT_HOME);
         intakeRightServo.setPosition(INTAKE_RIGHT_HOME);
         isIntakeClosed = true;
+        timer.reset();
+    }
+
+    public boolean isMoving() {
+        return (timer.milliseconds() < INTAKE_MOVE_TIME);
     }
 
     /**

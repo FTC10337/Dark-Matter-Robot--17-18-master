@@ -156,7 +156,7 @@ public class Auto_Jewel_Blue extends LinearOpMode {
 
         // Wait for the game to start (driver presses PLAY)
 
-        // Set a timer of how often to update gyro status telemetry
+        // Set a flipTimer of how often to update gyro status telemetry
         ElapsedTime updateGyroStatTimer = new ElapsedTime();
         updateGyroStatTimer.reset();
 
@@ -213,7 +213,7 @@ public class Auto_Jewel_Blue extends LinearOpMode {
                 telemetry.addData("Gyro heading: ", readGyro());
                 telemetry.update();
 
-                // And reset the timer
+                // And reset the flipTimer
                 updateGyroStatTimer.reset();
             }
             idle();
