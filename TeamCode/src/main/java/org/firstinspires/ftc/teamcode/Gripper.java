@@ -1,7 +1,9 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.qualcomm.robotcore.hardware.PwmControl;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.hardware.ServoControllerEx;
 import com.qualcomm.robotcore.util.Range;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
@@ -55,6 +57,15 @@ public class Gripper {
         purpleGrip = hw.servo.get(pg);
         blackGrip = hw.servo.get(bg);
         rotateServo = hw.servo.get(rot);
+
+        // Set the rotation servo for extended PWM range
+        if (rotateServo.getController() instanceof ServoControllerEx) {
+            // Confirm its an extended range servo controller before we try to set to avoid crash
+            ServoControllerEx theControl = (ServoControllerEx) rotateServo.getController();
+            int thePort = rotateServo.getPortNumber();
+            PwmControl.PwmRange theRange = new PwmControl.PwmRange(553, 2500);
+            theControl.setServoPwmRange(thePort, theRange);
+        }
 
         // Start with purple on top
         topGrip = purpleGrip;
