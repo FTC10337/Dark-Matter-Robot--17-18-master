@@ -16,12 +16,15 @@ public class Gripper {
     public Servo purpleGrip = null;
     public Servo blackGrip = null;
     public Servo rotateServo = null;
+    public Servo extendGrip = null;
 
     // Servo constants
     public final static double GRIP_OPEN = 0.0;
     public final static double GRIP_CLOSED = 1.0;
-    public final static double GRIP_ROTATE_NORMAL = 0.0;
-    public final static double GRIP_ROTATE_FLIPPED = 1.0;
+    public final static double GRIP_ROTATE_NORMAL = 0.01;
+    public final static double GRIP_ROTATE_FLIPPED = .95;
+    public final static double GRIP_EXTEND_HOME = 0.52;
+    public final static double GRIP_EXTEND_OUT = .88;
     public final static double FLIP_TIME = 1000;        // 1 second for servo to flip gripper
     public final static double GRIP_TIME = 1000;        // 1 second for grip to open or close
 
@@ -52,11 +55,12 @@ public class Gripper {
      * @param bg  Name of black gripper servo
      * @param rot Name of gripper rotation servo
      */
-    public void init(HardwareMap hw, String pg, String bg, String rot) {
+    public void init(HardwareMap hw, String pg, String bg, String rot, String ext) {
         // Define and Initialize gripper servos
         purpleGrip = hw.servo.get(pg);
         blackGrip = hw.servo.get(bg);
         rotateServo = hw.servo.get(rot);
+        extendGrip = hw.servo.get(ext);
 
         // Set the rotation servo for extended PWM range
         if (rotateServo.getController() instanceof ServoControllerEx) {
@@ -122,6 +126,19 @@ public class Gripper {
         setBtmOpen();
     }
 
+    /**
+     * Extend gripper
+     */
+    public void setExtendOut() {
+        extendGrip.setPosition(GRIP_EXTEND_OUT);
+    }
+
+    /**
+     * Retract gripper
+     */
+    public void setExtendIn() {
+        extendGrip.setPosition(GRIP_EXTEND_HOME);
+    }
 
     /**
      * Close the purple gripper
