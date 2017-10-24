@@ -31,11 +31,15 @@ package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.hardware.adafruit.AdafruitBNO055IMU;
 import com.qualcomm.hardware.bosch.BNO055IMU;
+import com.qualcomm.robotcore.hardware.AnalogInput;
 import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.hardware.TouchSensor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.RobotLog;
 
@@ -68,14 +72,11 @@ public class HardwareDM18
 
     public Servo    jewelServo       = null;
     public Servo    jewelRotServo    = null;
-    //public Servo    purpleGrip   = null;
-    //public Servo    blackGrip  = null;
-    //public Servo    rotateServo  = null;
-    public Servo    gripExtendServo  = null;
-
 
     public ColorSensor  jewelCS = null;
     public DistanceSensor jewelDS = null;
+
+    public DigitalChannel liftLimit = null;
 
     BNO055IMU adaGyro;
 
@@ -84,14 +85,6 @@ public class HardwareDM18
     public final static double JEWEL_ROT_HOME = 0.52;
     public final static double JEWEL_ROT_FWD = 0.62;
     public final static double JEWEL_ROT_REV = 0.42;
-
-    //public final static double GRIP_OPEN = 0.0;
-    //public final static double GRIP_CLOSED = 1.0;
-    //public final static double GRIP_ROTATE_NORMAL = 0.0;
-    //public final static double GRIP_ROTATE_FLIPPED = 1.0;
-    public final static double GRIP_EXTEND_HOME = 0.0;
-    public final static double GRIP_EXTEND_OUT = 1.0;
-
 
 
     /* Drive train constants */
@@ -143,12 +136,18 @@ public class HardwareDM18
         intake.init(hwMap, "intakeLeft", "intakeRight", "ils", "irs");
 
         // Setup gripper mapped to hardware
-        gripper.init(hwMap, "gripTop", "gripBottom", "gripRotate");
+        gripper.init(hwMap, "gripTop", "gripBottom", "gripRotate", "gripExtend");
+
+        // get a reference to our digital lift limit switch.
+        liftLimit = hwMap.get(DigitalChannel.class, "liftlimit");
+
+        // set the digital channel to input.
+        liftLimit.setMode(DigitalChannel.Mode.INPUT);
 
         // Define lift motor
         liftMotor = hwMap.dcMotor.get("lift");
 
-        liftMotor.setDirection(DcMotor.Direction.FORWARD);
+        liftMotor.setDirection(DcMotor.Direction.REVERSE);
 
         // Set all motors to zero power
         leftDrive1.setPower(0);
@@ -164,10 +163,10 @@ public class HardwareDM18
         rightDrive2.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
 
+
         // Define and initialize ALL installed servos.
         jewelServo = hwMap.servo.get("jewel");
         jewelRotServo = hwMap.servo.get("jewelRot");
-        gripExtendServo = hwMap.servo.get("gripExtend");
 
         // Set init positions of servos
         jewelServo.setPosition(JEWEL_HOME);
