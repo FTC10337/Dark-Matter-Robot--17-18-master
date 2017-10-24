@@ -32,10 +32,14 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.robotcontroller.external.samples.HardwarePushbot;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
+
+import static java.lang.Double.NaN;
 
 /**
  * This file provides basic Telop driving for a Pushbot robot.
@@ -62,6 +66,16 @@ public class TeleOpDM18 extends OpMode {
 
 
     boolean intake = false;
+    boolean isPressed = false;
+    boolean runToPos = false;
+
+    double LIFT_POWER = 0;
+    double distanceOutOfRange = NaN;
+    int targetPos = 0;
+
+
+    ElapsedTime liftTimer = new ElapsedTime();
+
 
     /*
      * Code to run ONCE when the driver hits INIT
@@ -72,6 +86,8 @@ public class TeleOpDM18 extends OpMode {
          * The init() method of the hardware class does all the work here
          */
         robot.init(hardwareMap);
+
+
 
         // Send telemetry message to signify robot waiting;
         telemetry.addData("Say", "Hello Driver");    //
@@ -104,12 +120,18 @@ public class TeleOpDM18 extends OpMode {
         double grip_bottom_pos = robot.gripper.getBtmServoPos();
         double intake_left_pos = robot.intake.getLeftServoPos();
         double intake_right_pos = robot.intake.getRightServoPos();
+        double rot = robot.gripper.extendGrip.getPosition();
         //telemetry.addData("Dist: ", robot.jewelDS.getDistance(DistanceUnit.CM));
         //telemetry.addData("left Pos: ", intake_left_pos);
         //telemetry.addData("right Pos: ", intake_right_pos);
         //telemetry.addData("top Grip Pos:", grip_top_pos);
         //telemetry.addData("btm Grip Pos:", grip_bottom_pos);
-
+        //telemetry.addData("Limit is: ", robot.liftLimit.getState());
+        //telemetry.addData("lift Enc: ", robot.liftMotor.getCurrentPosition());
+        telemetry.addData("lPower: ", robot.intake.lInPower);
+        telemetry.addData("rPower: ", robot.intake.rInPower);
+        telemetry.addData("intake: ", robot.intake.isIntakeInOn);
+        telemetry.addData("cycle: ", robot.intake.intakeCycle);
         telemetry.update();
 
         double left;
@@ -189,8 +211,66 @@ public class TeleOpDM18 extends OpMode {
         */
 
 
+
+        // Testing lift
+        if (gamepad2.y) {
+            robot.liftMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            targetPos=-8000;
+            runToPos = true;
+            liftTimer.reset();
+        }
+
+        if (gamepad2.b) {
+            robot.liftMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            targetPos=-4000;
+            runToPos = true;
+            liftTimer.reset();
+        }
+
+        if (gamepad2.a) {
+            robot.liftMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            targetPos=0;
+            runToPos = true;
+            liftTimer.reset();
+        }
+
+        // Testing lift run to position with deceleration as lift approaching target position
+        if (runToPos) {
+
+            robot.liftMotor.setTargetPosition(targetPos);
+            double difference = Math.abs(robot.liftMotor.getCurrentPosition()-targetPos);
+            double liftPower = difference/1000;
+            Range.clip(liftPower, 0.2, 1.0);
+            robot.liftMotor.setPower(liftPower);
+
+            if (liftTimer.milliseconds() > 3000 || !robot.liftMotor.isBusy()) {
+                runToPos = false;
+            }
+        } else {
+            robot.liftMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+            robot.liftMotor.setPower(0.0);
+        }
+
+
+
+
+
+        // Testing gripper extension
+        if (gamepad2.right_trigger > 0.2) robot.gripper.setExtendOut();
+        if (gamepad2.right_trigger < 0.2)robot.gripper.setExtendIn();
+
+        /* Testing lift limit switch
+        if (gamepad2.right_stick_y > 0.2 && robot.liftLimit.getState()) {
+            LIFT_POWER = 1.0;
+        } else if (gamepad2.right_stick_y < -0.2) {
+            LIFT_POWER = -1.0;
+        } else LIFT_POWER = 0.0;
+
+        robot.liftMotor.setPower(LIFT_POWER);
+        */
+
         // Process the grip flipper
-        if (gamepad1.dpad_left) robot.gripper.flip();
+        if (gamepad1.dpad_left && !robot.gripper.isFlipping()) robot.gripper.flip();
         if (gamepad1.dpad_up) robot.gripper.setFlipped(false);
         if (gamepad1.dpad_up) robot.gripper.setFlipped(true);
 
@@ -201,7 +281,7 @@ public class TeleOpDM18 extends OpMode {
             robot.intake.setIn();
             }
 
-
+        // Intake STOP
         if (intake == true && robot.jewelDS.getDistance(DistanceUnit.CM) < 7.0) {
             robot.intake.setStop();
             intake = false;
