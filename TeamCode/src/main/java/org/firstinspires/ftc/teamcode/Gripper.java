@@ -19,9 +19,9 @@ public class Gripper {
     public Servo extendGrip = null;
 
     // Servo constants
-    public final static double GRIP_OPEN = 0.0;
+    public final static double GRIP_OPEN = 1.0;
     public final static double GRIP_PARTIAL_OPEN = 0.5;
-    public final static double GRIP_CLOSED = 1.0;
+    public final static double GRIP_CLOSED = 0.0;
     public final static double GRIP_ROTATE_NORMAL = 0.01;
     public final static double GRIP_ROTATE_FLIPPED = .95;
     public final static double GRIP_EXTEND_HOME = 0.52;
@@ -31,8 +31,8 @@ public class Gripper {
     public final static double EXTEND_TIME = 500;
 
     /* Gripper state variables */
-    Servo topGrip = purpleGrip;        // Should start w/ purple gripper on top
-    Servo btmGrip = blackGrip;         // and black on bottom
+    Servo topGrip = blackGrip;        // Should start w/ purple gripper on top
+    Servo btmGrip = purpleGrip;         // and black on bottom
     boolean isGripFlipped = false;
 
     /* Flip flipTimer */
@@ -264,7 +264,7 @@ public class Gripper {
     }
 
     public boolean isMoving() {
-        return (purpleIsMoving() || blackIsMoving());
+        return (purpleIsMoving() || blackIsMoving() || btmIsMoving() || topIsMoving() || isFlipping());
     }
 
     public boolean isExtending() { return (extendTimer.milliseconds() < EXTEND_TIME);}

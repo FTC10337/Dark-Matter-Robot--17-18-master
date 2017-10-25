@@ -66,7 +66,7 @@ public class TeleOpDM18_IntakeSequenced extends OpMode {
     boolean intake = false;
     int curState = 0;
     int lastState = 0;
-
+    double targetDistance = 8.0;
     /*
      * Code to run ONCE when the driver hits INIT
      */
@@ -95,6 +95,7 @@ public class TeleOpDM18_IntakeSequenced extends OpMode {
      */
     @Override
     public void start() {
+        robot.gripper.setBothOpen();
     }
 
     /*
@@ -105,8 +106,10 @@ public class TeleOpDM18_IntakeSequenced extends OpMode {
 
 
         telemetry.addData("curState: ", curState);
-        telemetry.addData("Enc: ", robot.lift.liftMotor.getCurrentPosition());
+        //telemetry.addData("Enc: ", robot.lift.liftMotor.getCurrentPosition());
         telemetry.addData("lPower", robot.intake.lInPower);
+        telemetry.addData("Intake: ", robot.intake.intakeCycle);
+        telemetry.addData("Dist: ", robot.jewelDS.getDistance(DistanceUnit.CM));
         telemetry.update();
 
         double left;
@@ -142,7 +145,10 @@ public class TeleOpDM18_IntakeSequenced extends OpMode {
 
         switch (curState) {
             case 0: // BEGINNING OF TELEOP
-                if (curState != lastState) robot.intake.setClosed();
+                if (curState != lastState) {
+                    robot.intake.setClosed();
+                    robot.gripper.setBothOpen();
+                }
                 // If driver_1 starts intake, move on to next state
                 if (gamepad1.right_trigger > 0.2) {
                     robot.intake.setIn();
@@ -156,7 +162,7 @@ public class TeleOpDM18_IntakeSequenced extends OpMode {
 
             case 1: // ATTEMPTING TO INTAKE GLYPH
                 // If glyph is detected, stop intake and move on to next state
-                if (robot.jewelDS.getDistance(DistanceUnit.CM) < 7.0) {
+                if (robot.jewelDS.getDistance(DistanceUnit.CM) < targetDistance) {
                     robot.intake.setStop();
                     curState = 2;
                 } else if (gamepad1.left_trigger > 0.2) {
@@ -176,17 +182,17 @@ public class TeleOpDM18_IntakeSequenced extends OpMode {
                 }
                 // Initiate grab of glyph and move on to next state if driver_2 confirms.
                 // ***AUTO SEQUENCE BEGINS AFTER THIS DRIVER CONFIRMATION***
-                if (gamepad2.a && robot.jewelDS.getDistance(DistanceUnit.CM) < 7.0) {
+                if (gamepad2.a && robot.jewelDS.getDistance(DistanceUnit.CM) < targetDistance) {
                     robot.gripper.setBtmClosed();
                     curState = 3;
                 }
                 // If for some reason, glyph is not seen, go back to start of process.
-                if (robot.jewelDS.getDistance(DistanceUnit.CM) > 7.0) curState = 0;
+                if (robot.jewelDS.getDistance(DistanceUnit.CM) > targetDistance) curState = 0;
                 break;
 
             case 3: // OPEN INTAKE WHEELS
                 // Open intake after gripper has closed
-                if (!robot.gripper.isMoving()) {
+                if (!robot.gripper.btmIsMoving()) {
                     robot.intake.setOpen();
                     curState = 4;
                 }
@@ -202,14 +208,17 @@ public class TeleOpDM18_IntakeSequenced extends OpMode {
 
             case 5: // LIFT TO TOP
                 // Move lift to top position
-                if (robot.lift.runToPos) {
+                if (robot.lift.liftTimer.milliseconds() < robot.lift.LIFT_TIME) {
                     robot.lift.updateLiftMotor();
                 } else {
+
                     // When lift makes it to top, set intake back to closed position and start intaking again
                     // Flip gripper
                     robot.intake.setClosed();
                     robot.intake.setIn();
                     robot.gripper.flip();
+                    robot.lift.liftMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+                    robot.lift.liftMotor.setPower(0.0);
                     curState = 6;
                 }
                 break;
@@ -222,11 +231,11 @@ public class TeleOpDM18_IntakeSequenced extends OpMode {
                     robot.lift.updateLiftMotor();
                 }
                 // Stop intake after glyph has been detected
-                if (robot.jewelDS.getDistance(DistanceUnit.CM) < 7.0) {
+                if (robot.jewelDS.getDistance(DistanceUnit.CM) < targetDistance) {
                     robot.intake.setStop();
                 }
                 // Move to next state when flipping is done and glyph has been detected in intake
-                if (!robot.gripper.isFlipping() && robot.jewelDS.getDistance(DistanceUnit.CM) < 7.0) {
+                if (!robot.gripper.isFlipping() && robot.jewelDS.getDistance(DistanceUnit.CM) < targetDistance) {
                     curState = 7;
                 }
                 break;
@@ -248,12 +257,12 @@ public class TeleOpDM18_IntakeSequenced extends OpMode {
                     else if (gamepad1.a) {
                         robot.intake.setStop();
                     } // set intake stop if glyph detected
-                    else if (robot.jewelDS.getDistance(DistanceUnit.CM) < 7.0) {
+                    else if (robot.jewelDS.getDistance(DistanceUnit.CM) < targetDistance) {
                         robot.intake.setStop();
                     }
 
                     // Move to next state if driver2 initiates glyph grab
-                    if (gamepad2.a && !robot.intake.isIntakeInOn && !robot.intake.isIntakeOutOn && robot.jewelDS.getDistance(DistanceUnit.CM) < 7.0) {
+                    if (gamepad2.a && !robot.intake.isIntakeInOn && !robot.intake.isIntakeOutOn && robot.jewelDS.getDistance(DistanceUnit.CM) < 8.0) {
                         // Grab glyph
                         robot.gripper.setBtmClosed();
                         curState = 8;
@@ -473,7 +482,7 @@ public class TeleOpDM18_IntakeSequenced extends OpMode {
         }
 
         // Intake STOP
-        if (intake == true && robot.jewelDS.getDistance(DistanceUnit.CM) < 7.0) {
+        if (intake == true && robot.jewelDS.getDistance(DistanceUnit.CM) < 8.0) {
             robot.intake.setStop();
             intake = false;
         }

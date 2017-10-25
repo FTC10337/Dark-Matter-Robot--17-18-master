@@ -27,7 +27,7 @@ public class Intake {
     final static double INTAKE_MOVE_TIME = 500;      // 0.5 seconds to open or close intake
     final static double MAX_IN_POWER = 1.0;
     final static double MIN_IN_POWER = 0.6;
-    final static double IN_POWER_DELTA = 0.01;      // Amount to increment/decrement power per cycle
+    final static double IN_POWER_DELTA = 0.005;      // Amount to increment/decrement power per cycle
 
     /* Intake state variables */
     boolean intakeCycle = true;        // True we are incrementing right power and decrementing left
@@ -125,26 +125,29 @@ public class Intake {
                 // In 1st half of cycle
                 rInPower = rInPower + IN_POWER_DELTA;
                 lInPower = lInPower - IN_POWER_DELTA;
-                if (rInPower > MAX_IN_POWER) {
-                    // Reached end so reverse our direction
-                    intakeCycle = false;
                 } else {
-                    // In 2nd half of cycle
-                    lInPower = lInPower + IN_POWER_DELTA;
-                    rInPower = rInPower - IN_POWER_DELTA;
-                    if (lInPower > MAX_IN_POWER) {
-                        // Reached end so reverse our direction
-                        intakeCycle = true;
-                    }
+                  // In 2nd half of cycle
+                  lInPower = lInPower + IN_POWER_DELTA;
+                  rInPower = rInPower - IN_POWER_DELTA;
                 }
+
+                // Reached end so reverse our direction
+                if (rInPower > MAX_IN_POWER) {
+                    intakeCycle = false;
+                } else if (lInPower > MAX_IN_POWER) {
+                    intakeCycle = true; }
 
                 Range.clip(lInPower, MIN_IN_POWER, MAX_IN_POWER);
                 Range.clip(rInPower, MIN_IN_POWER, MAX_IN_POWER);
+
+
+
+                // Set updated motor power
                 intakeRightMotor.setPower(rInPower);
                 intakeLeftMotor.setPower(lInPower);
             }
         }
-    }
+
 
     /**
      * Stop the intake feed wheels

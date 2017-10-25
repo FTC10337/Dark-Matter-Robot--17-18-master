@@ -19,6 +19,7 @@ public class Lift {
     public int targetPos = 0;
     boolean runToPos = false;
 
+    public int LIFT_TIME = 3000;
     ElapsedTime liftTimer = new ElapsedTime();
 
     /* Lift constants */
@@ -29,8 +30,8 @@ public class Lift {
             (LIFT_PULLEY_DIAMETER_INCHES * 3.1415);
 
     // Lift variables
-    public int LIFT_TOP_POS = (int) (-13*LIFT_COUNTS_PER_INCH);
-    public int LIFT_MID_POS = (int) (-7*LIFT_COUNTS_PER_INCH);
+    public int LIFT_TOP_POS = (int) (13*LIFT_COUNTS_PER_INCH);
+    public int LIFT_MID_POS = (int) (7*LIFT_COUNTS_PER_INCH);
     public int LIFT_BTM_POS = 0;
 
     // Timer to tell if intake is still opening/closing
@@ -54,7 +55,7 @@ public class Lift {
     public void init (HardwareMap hw, String lift, String liftlimit) {
         // Define and Initialize intake Motors
         liftMotor = hw.dcMotor.get(lift);
-        liftMotor.setDirection(DcMotor.Direction.REVERSE);
+        liftMotor.setDirection(DcMotor.Direction.FORWARD);
 
         // Set their operating modes and stop them
         liftMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
@@ -98,14 +99,6 @@ public class Lift {
         double liftPower = difference / 1000;
         Range.clip(liftPower, 0.2, 1.0);
         liftMotor.setPower(liftPower);
-
-        runToPos = true;
-
-        if (liftTimer.milliseconds() > 3000 || !liftMotor.isBusy()) {
-            runToPos = false;
-            liftMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-            liftMotor.setPower(0.0);
-        }
     }
 
     // Resets lift encoder to 0 using lift limit switch
