@@ -68,15 +68,11 @@ public class HardwareDM18
     public DcMotor  rightDrive1  = null;
     public DcMotor  rightDrive2  = null;
 
-    public DcMotor  liftMotor    = null;
-
     public Servo    jewelServo       = null;
     public Servo    jewelRotServo    = null;
 
     public ColorSensor  jewelCS = null;
     public DistanceSensor jewelDS = null;
-
-    public DigitalChannel liftLimit = null;
 
     BNO055IMU adaGyro;
 
@@ -101,6 +97,9 @@ public class HardwareDM18
 
     // Gripper
     public Gripper gripper = new Gripper();
+
+    // Lift
+    public Lift lift = new Lift();
 
     /* Gripper state variables */
     Servo topGrip = null;
@@ -138,16 +137,8 @@ public class HardwareDM18
         // Setup gripper mapped to hardware
         gripper.init(hwMap, "gripTop", "gripBottom", "gripRotate", "gripExtend");
 
-        // get a reference to our digital lift limit switch.
-        liftLimit = hwMap.get(DigitalChannel.class, "liftlimit");
-
-        // set the digital channel to input.
-        liftLimit.setMode(DigitalChannel.Mode.INPUT);
-
-        // Define lift motor
-        liftMotor = hwMap.dcMotor.get("lift");
-
-        liftMotor.setDirection(DcMotor.Direction.REVERSE);
+        // Setup lift mapped to hardware
+        lift.init(hwMap, "lift", "liftlimit");
 
         // Set all motors to zero power
         leftDrive1.setPower(0);
@@ -231,34 +222,4 @@ public class HardwareDM18
         rightDrive2.setZeroPowerBehavior(behavior);
 
     }
-
-
-
-    public void pusherIn() {
-        // To be added
-    }
-
-    public void pusherOut() {
-        // To be added
-    }
-
-    public void liftFloor0() {
-        // Code to move lift to floor 0
-    }
-
-    public void liftFloor1() {
-        // Code to move lift to floor 1
-    }
-
-    public void liftFloor2() {
-        // Code to move lift to floor 2
-    }
-
-    public boolean reachedFloor() {
-        // return if reached our destination
-        return true;
-    }
-
-
 }
-

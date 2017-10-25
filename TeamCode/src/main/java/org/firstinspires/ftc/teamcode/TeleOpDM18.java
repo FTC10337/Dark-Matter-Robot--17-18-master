@@ -214,21 +214,21 @@ public class TeleOpDM18 extends OpMode {
 
         // Testing lift
         if (gamepad2.y) {
-            robot.liftMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            robot.lift.liftMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             targetPos=-8000;
             runToPos = true;
             liftTimer.reset();
         }
 
         if (gamepad2.b) {
-            robot.liftMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            robot.lift.liftMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             targetPos=-4000;
             runToPos = true;
             liftTimer.reset();
         }
 
         if (gamepad2.a) {
-            robot.liftMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            robot.lift.liftMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             targetPos=0;
             runToPos = true;
             liftTimer.reset();
@@ -237,18 +237,18 @@ public class TeleOpDM18 extends OpMode {
         // Testing lift run to position with deceleration as lift approaching target position
         if (runToPos) {
 
-            robot.liftMotor.setTargetPosition(targetPos);
-            double difference = Math.abs(robot.liftMotor.getCurrentPosition()-targetPos);
+            robot.lift.liftMotor.setTargetPosition(targetPos);
+            double difference = Math.abs(robot.lift.liftMotor.getCurrentPosition()-targetPos);
             double liftPower = difference/1000;
             Range.clip(liftPower, 0.2, 1.0);
-            robot.liftMotor.setPower(liftPower);
+            robot.lift.liftMotor.setPower(liftPower);
 
-            if (liftTimer.milliseconds() > 3000 || !robot.liftMotor.isBusy()) {
+            if (liftTimer.milliseconds() > 3000 || !robot.lift.liftMotor.isBusy()) {
                 runToPos = false;
             }
         } else {
-            robot.liftMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-            robot.liftMotor.setPower(0.0);
+            robot.lift.liftMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+            robot.lift.liftMotor.setPower(0.0);
         }
 
 

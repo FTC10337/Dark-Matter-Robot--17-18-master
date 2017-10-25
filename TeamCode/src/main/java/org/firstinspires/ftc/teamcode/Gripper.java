@@ -20,6 +20,7 @@ public class Gripper {
 
     // Servo constants
     public final static double GRIP_OPEN = 0.0;
+    public final static double GRIP_PARTIAL_OPEN = 0.5;
     public final static double GRIP_CLOSED = 1.0;
     public final static double GRIP_ROTATE_NORMAL = 0.01;
     public final static double GRIP_ROTATE_FLIPPED = .95;
@@ -27,6 +28,7 @@ public class Gripper {
     public final static double GRIP_EXTEND_OUT = .88;
     public final static double FLIP_TIME = 1000;        // 1 second for servo to flip gripper
     public final static double GRIP_TIME = 1000;        // 1 second for grip to open or close
+    public final static double EXTEND_TIME = 500;
 
     /* Gripper state variables */
     Servo topGrip = purpleGrip;        // Should start w/ purple gripper on top
@@ -37,6 +39,7 @@ public class Gripper {
     ElapsedTime flipTimer = new ElapsedTime();
     ElapsedTime purpleTimer = new ElapsedTime();
     ElapsedTime blackTimer = new ElapsedTime();
+    ElapsedTime extendTimer = new ElapsedTime();
     ElapsedTime topTimer = null;
     ElapsedTime btmTimer = null;
 
@@ -127,17 +130,29 @@ public class Gripper {
     }
 
     /**
+     * Open both grippers partially to score without interferring with other stacked glyphs
+     */
+    public void setBothPartialOpen() {
+        btmGrip.setPosition(GRIP_PARTIAL_OPEN);
+        topGrip.setPosition(GRIP_PARTIAL_OPEN);
+    }
+
+    /**
      * Extend gripper
      */
     public void setExtendOut() {
+
         extendGrip.setPosition(GRIP_EXTEND_OUT);
+        extendTimer.reset();
     }
 
     /**
      * Retract gripper
      */
     public void setExtendIn() {
+
         extendGrip.setPosition(GRIP_EXTEND_HOME);
+        extendTimer.reset();
     }
 
     /**
@@ -251,6 +266,8 @@ public class Gripper {
     public boolean isMoving() {
         return (purpleIsMoving() || blackIsMoving());
     }
+
+    public boolean isExtending() { return (extendTimer.milliseconds() < EXTEND_TIME);}
 
     /**
      * This is designed to be used for manual tuning of servo Min/Max constants not for routine use

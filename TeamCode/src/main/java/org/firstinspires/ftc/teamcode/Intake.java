@@ -1,3 +1,4 @@
+
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -13,10 +14,10 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 public class Intake {
 
     // Hardware
-    DcMotor intakeLeftMotor   = null;
-    DcMotor  intakeRightMotor  = null;
-    Servo intakeLeftServo  = null;
-    Servo    intakeRightServo = null;
+    DcMotor intakeLeftMotor = null;
+    DcMotor intakeRightMotor = null;
+    Servo intakeLeftServo = null;
+    Servo intakeRightServo = null;
 
     // Intake constants
     final static double INTAKE_LEFT_HOME = 0.94;
@@ -49,15 +50,15 @@ public class Intake {
     }
 
     /**
-     *  Initialize the intake
+     * Initialize the intake
      *
-     * @param hw    Hardwaremap for our robot
-     * @param lm    Name of left intake motor
-     * @param rm    Name of right intake motor
-     * @param ls    Name of left intake arm servo
-     * @param rs    Name of right intake arm servo
+     * @param hw Hardwaremap for our robot
+     * @param lm Name of left intake motor
+     * @param rm Name of right intake motor
+     * @param ls Name of left intake arm servo
+     * @param rs Name of right intake arm servo
      */
-    public void init (HardwareMap hw, String lm, String rm, String ls, String rs) {
+    public void init(HardwareMap hw, String lm, String rm, String ls, String rs) {
         // Define and Initialize intake Motors
         intakeLeftMotor = hw.dcMotor.get(lm);
         intakeRightMotor = hw.dcMotor.get(rm);
@@ -76,7 +77,7 @@ public class Intake {
     }
 
     /**
-     *   Open the intake
+     * Open the intake
      */
     public void setOpen() {
         intakeLeftServo.setPosition(INTAKE_LEFT_RELEASE);
@@ -86,10 +87,9 @@ public class Intake {
     }
 
     /**
-     *   Close the intake
+     * Close the intake
      */
-    public void setClosed()
-    {
+    public void setClosed() {
         intakeLeftServo.setPosition(INTAKE_LEFT_HOME);
         intakeRightServo.setPosition(INTAKE_RIGHT_HOME);
         isIntakeClosed = true;
@@ -101,7 +101,7 @@ public class Intake {
     }
 
     /**
-     *   Set the intake feed wheels in
+     * Set the intake feed wheels in
      */
     public void setIn() {
         rInPower = MIN_IN_POWER;
@@ -115,7 +115,7 @@ public class Intake {
 
     /**
      * Process 1 cycle of varying the intake motor powers.
-     *
+     * <p>
      * Only works if we are feeding in, not out.   Cycles the power between min and max values.
      */
     public void updateInPower() {
@@ -123,28 +123,31 @@ public class Intake {
         if (isIntakeInOn) {
             if (intakeCycle) {
                 // In 1st half of cycle
-                rInPower = Math.max(rInPower+IN_POWER_DELTA, MAX_IN_POWER);
-                lInPower = Math.min(lInPower-IN_POWER_DELTA, MIN_IN_POWER);
-                if (rInPower > (MAX_IN_POWER - IN_POWER_DELTA)) {
+                rInPower = rInPower + IN_POWER_DELTA;
+                lInPower = lInPower - IN_POWER_DELTA;
+                if (rInPower > MAX_IN_POWER) {
                     // Reached end so reverse our direction
                     intakeCycle = false;
-                }
-                else {
+                } else {
                     // In 2nd half of cycle
-                    lInPower = Math.max(lInPower+IN_POWER_DELTA, MAX_IN_POWER);
-                    rInPower = Math.min(rInPower-IN_POWER_DELTA, MIN_IN_POWER);
-                    if (lInPower > (MAX_IN_POWER - IN_POWER_DELTA)) {
+                    lInPower = lInPower + IN_POWER_DELTA;
+                    rInPower = rInPower - IN_POWER_DELTA;
+                    if (lInPower > MAX_IN_POWER) {
                         // Reached end so reverse our direction
                         intakeCycle = true;
                     }
                 }
 
+                Range.clip(lInPower, MIN_IN_POWER, MAX_IN_POWER);
+                Range.clip(rInPower, MIN_IN_POWER, MAX_IN_POWER);
+                intakeRightMotor.setPower(rInPower);
+                intakeLeftMotor.setPower(lInPower);
             }
         }
     }
 
     /**
-     *  Stop the intake feed wheels
+     * Stop the intake feed wheels
      */
     public void setStop() {
         intakeLeftMotor.setPower(0.0);
@@ -164,23 +167,20 @@ public class Intake {
     }
 
     /**
-     *
-     * @return  true if intake is in closed position
+     * @return true if intake is in closed position
      */
     public boolean isClosed() {
         return isIntakeClosed;
     }
 
     /**
-     *
-     * @return  true if we are currently feeding in direction
+     * @return true if we are currently feeding in direction
      */
     public boolean isIn() {
         return isIntakeInOn;
     }
 
     /**
-     *
      * @return true if we are currently feeding out direction
      */
     public boolean isOut() {
@@ -188,20 +188,18 @@ public class Intake {
     }
 
     /**
-     *
      * This is designed to be used for manual tuning of servo Min/Max constants not for routine use
      *
-     * @return  current left servo position
+     * @return current left servo position
      */
     public double getLeftServoPos() {
         return intakeLeftServo.getPosition();
     }
 
     /**
-     *
      * This is designed to be used for manual tuning of servo Min/Max constants not for routine use
      *
-     * @return  current right servo position
+     * @return current right servo position
      */
 
     public double getRightServoPos() {
@@ -209,10 +207,9 @@ public class Intake {
     }
 
     /**
-     *
      * This is designed to be used for manual tuning of servo Min/Max constants not for routine use
      *
-     * @param pos  desired left servo position
+     * @param pos desired left servo position
      */
     public void setLeftServoPos(double pos) {
         pos = Range.clip(pos, 0.0, 1.0);
@@ -220,10 +217,9 @@ public class Intake {
     }
 
     /**
-     *
      * This is designed to be used for manual tuning of servo Min/Max constants not for routine use
      *
-     * @param pos  desired right servo position
+     * @param pos desired right servo position
      */
 
     public void setRightServoPos(double pos) {
