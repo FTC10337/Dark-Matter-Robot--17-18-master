@@ -29,8 +29,8 @@ public class Lift {
             (LIFT_PULLEY_DIAMETER_INCHES * 3.1415);
 
     // Lift variables
-    public int LIFT_TOP_POS = (int) (13*LIFT_COUNTS_PER_INCH);
-    public int LIFT_MID_POS = (int) (7*LIFT_COUNTS_PER_INCH);
+    public int LIFT_TOP_POS = (int) (-13*LIFT_COUNTS_PER_INCH);
+    public int LIFT_MID_POS = (int) (-7*LIFT_COUNTS_PER_INCH);
     public int LIFT_BTM_POS = 0;
 
     // Timer to tell if intake is still opening/closing
@@ -67,6 +67,7 @@ public class Lift {
 
     }
 
+    // Set lift position to top
     public void setLiftTop() {
         targetPos = LIFT_TOP_POS;
         liftMotor.setTargetPosition(targetPos);
@@ -74,6 +75,7 @@ public class Lift {
         liftTimer.reset();
     }
 
+    // Set lift position to middle
     public void setLiftMid() {
         targetPos = LIFT_MID_POS;
         liftMotor.setTargetPosition(targetPos);
@@ -81,6 +83,7 @@ public class Lift {
         liftTimer.reset();
     }
 
+    // Set lift position to bottom
     public void setLiftBtm() {
         targetPos = LIFT_BTM_POS;
         liftMotor.setTargetPosition(targetPos);
@@ -88,6 +91,7 @@ public class Lift {
         liftTimer.reset();
     }
 
+    // Move lift to updated lift position then stop
     public void updateLiftMotor() {
 
         double difference = Math.abs(liftMotor.getCurrentPosition() - targetPos);
@@ -95,11 +99,30 @@ public class Lift {
         Range.clip(liftPower, 0.2, 1.0);
         liftMotor.setPower(liftPower);
 
+        runToPos = true;
+
         if (liftTimer.milliseconds() > 3000 || !liftMotor.isBusy()) {
             runToPos = false;
             liftMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
             liftMotor.setPower(0.0);
         }
+    }
+
+    // Resets lift encoder to 0 using lift limit switch
+    public void resetFloorPos() {
+        if (liftLimit.getState()) {
+            liftMotor.setPower(-0.3);
+        } else {
+            liftMotor.setPower(0.0);
+            liftMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+            liftTimer.reset();
+        }
+    }
+
+    public boolean isResetComplete() {
+        if (liftMotor.getMode() == DcMotor.RunMode.STOP_AND_RESET_ENCODER && liftTimer.milliseconds() > 1000) {
+            return true;
+        } else return false;
     }
 
     public boolean reachedFloor() {

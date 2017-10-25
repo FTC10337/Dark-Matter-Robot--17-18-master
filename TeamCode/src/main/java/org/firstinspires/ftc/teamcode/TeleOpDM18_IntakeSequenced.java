@@ -65,6 +65,7 @@ public class TeleOpDM18_IntakeSequenced extends OpMode {
 
     boolean intake = false;
     int curState = 0;
+    int lastState = 0;
 
     /*
      * Code to run ONCE when the driver hits INIT
@@ -103,7 +104,9 @@ public class TeleOpDM18_IntakeSequenced extends OpMode {
     public void loop() {
 
 
-        //telemetry.addData("cycle: ", robot.intake.intakeCycle);
+        telemetry.addData("curState: ", curState);
+        telemetry.addData("Enc: ", robot.lift.liftMotor.getCurrentPosition());
+        telemetry.addData("lPower", robot.intake.lInPower);
         telemetry.update();
 
         double left;
@@ -138,8 +141,9 @@ public class TeleOpDM18_IntakeSequenced extends OpMode {
 
 
         switch (curState) {
-            case 0: {
-                // BEGINNING OF TELEOP
+            case 0: // BEGINNING OF TELEOP
+                if (curState != lastState) robot.intake.setClosed();
+                // If driver_1 starts intake, move on to next state
                 if (gamepad1.right_trigger > 0.2) {
                     robot.intake.setIn();
                     curState = 1;
@@ -148,11 +152,12 @@ public class TeleOpDM18_IntakeSequenced extends OpMode {
                 } else if (gamepad1.a) {
                     robot.intake.setStop();
                 }
+                break;
 
-            }
-            case 1: {
-                // ATTEMPTING TO INTAKE GLYPH
+            case 1: // ATTEMPTING TO INTAKE GLYPH
+                // If glyph is detected, stop intake and move on to next state
                 if (robot.jewelDS.getDistance(DistanceUnit.CM) < 7.0) {
+                    robot.intake.setStop();
                     curState = 2;
                 } else if (gamepad1.left_trigger > 0.2) {
                     robot.intake.setOut();
@@ -161,205 +166,231 @@ public class TeleOpDM18_IntakeSequenced extends OpMode {
                     robot.intake.setStop();
                     curState = 0;
                 }
-            }
-            case 2: {
-                // GLYPH DETECTED IN INTAKE
-                // Stop intake wheels
-                robot.intake.setStop();
+                break;
+
+            case 2: // GLYPH DETECTED IN INTAKE
                 // Driver has ability to push glyph out to get another color if needed and reset process
                 if (gamepad1.left_trigger > 0.2) {
                     robot.intake.setOut();
                     curState = 0;
                 }
-                // Initiate grab of glpyh and next state if driver 2 confirms.
-                // AUTO SEQUENCE BEGINS AFTER THIS CONFIRMATION
+                // Initiate grab of glyph and move on to next state if driver_2 confirms.
+                // ***AUTO SEQUENCE BEGINS AFTER THIS DRIVER CONFIRMATION***
                 if (gamepad2.a && robot.jewelDS.getDistance(DistanceUnit.CM) < 7.0) {
                     robot.gripper.setBtmClosed();
                     curState = 3;
                 }
                 // If for some reason, glyph is not seen, go back to start of process.
                 if (robot.jewelDS.getDistance(DistanceUnit.CM) > 7.0) curState = 0;
+                break;
 
-            }
-            case 3: {
-                // OPEN INTAKE WHEELS
+            case 3: // OPEN INTAKE WHEELS
+                // Open intake after gripper has closed
                 if (!robot.gripper.isMoving()) {
                     robot.intake.setOpen();
                     curState = 4;
                 }
+                break;
 
-            }
-            case 4: {
-                // SET LIFT TO TOP
+            case 4: // SET LIFT TO TOP
+                // Set lift position to move to top after intake has opened
                 if (!robot.intake.isMoving()) {
                     robot.lift.setLiftTop();
                     curState = 5;
                 }
-            }
-            case 5: {
-                // LIFT TO TOP
-                robot.lift.updateLiftMotor();
-                // When lift makes it to top, set intake back to closed position and start intaking again
-                // Flip gripper
-                if (!robot.lift.runToPos) {
+                break;
+
+            case 5: // LIFT TO TOP
+                // Move lift to top position
+                if (robot.lift.runToPos) {
+                    robot.lift.updateLiftMotor();
+                } else {
+                    // When lift makes it to top, set intake back to closed position and start intaking again
+                    // Flip gripper
                     robot.intake.setClosed();
                     robot.intake.setIn();
                     robot.gripper.flip();
                     curState = 6;
                 }
-            }
-            case 6: {
-                // MOVE TO BTM FLOOR AND START LOOKING FOR ANOTHER GLYPH
+                break;
+
+            case 6: // MOVE TO BTM FLOOR AND START LOOKING FOR ANOTHER GLYPH
+                // Set lift to btm position
+                if (curState != lastState)  robot.lift.setLiftBtm();
+                // Begin moving lift to btm position after gripper is done flipping
                 if (!robot.gripper.isFlipping()) {
-                    robot.lift.setLiftBtm();
                     robot.lift.updateLiftMotor();
                 }
+                // Stop intake after glyph has been detected
                 if (robot.jewelDS.getDistance(DistanceUnit.CM) < 7.0) {
                     robot.intake.setStop();
                 }
+                // Move to next state when flipping is done and glyph has been detected in intake
                 if (!robot.gripper.isFlipping() && robot.jewelDS.getDistance(DistanceUnit.CM) < 7.0) {
                     curState = 7;
                 }
-            }
-            case 7: {
-                // READY TO GRAB 2ND GLYPH AS SOON AS LIFT REACHES BOTTOM
+                break;
+
+            case 7: // READY TO GRAB 2ND GLYPH AS SOON AS LIFT REACHES BOTTOM
+                // Continue to lower lift
                 if (robot.lift.runToPos) {
                     robot.lift.updateLiftMotor();
-                } else {
+                } else
+                // Lift in down position. New options available
+                {
+                    // set intake in
                     if (gamepad1.right_trigger > 0.2) {
                         robot.intake.setIn();
-                    } else if (gamepad1.left_trigger > 0.2) {
+                    } // set intake out
+                    else if (gamepad1.left_trigger > 0.2) {
                         robot.intake.setOut();
-                    } else if (gamepad1.a) {
+                    } // set intake stop
+                    else if (gamepad1.a) {
                         robot.intake.setStop();
-                    } else if (robot.jewelDS.getDistance(DistanceUnit.CM) < 7.0) {
+                    } // set intake stop if glyph detected
+                    else if (robot.jewelDS.getDistance(DistanceUnit.CM) < 7.0) {
                         robot.intake.setStop();
                     }
 
+                    // Move to next state if driver2 initiates glyph grab
                     if (gamepad2.a && !robot.intake.isIntakeInOn && !robot.intake.isIntakeOutOn && robot.jewelDS.getDistance(DistanceUnit.CM) < 7.0) {
+                        // Grab glyph
                         robot.gripper.setBtmClosed();
                         curState = 8;
                     }
                 }
+                break;
 
-            }
-            case 8: {
-                // OPEN INTAKE WHEELS
+            case 8: // OPEN INTAKE WHEELS
                 if (!robot.gripper.isMoving()) {
                     robot.intake.setOpen();
                     curState = 9;
                 }
-            }
-            case 9: {
-                // LIFT FOR DRIVING TO SCORE GLYPHS
+                break;
+
+            case 9: // LIFT FOR DRIVING TO SCORE GLYPHS
                 if (!robot.intake.isMoving()) {
                     robot.lift.setLiftMid();
                     curState = 10;
                 }
+                break;
 
-            }
-            case 10: {
-                // CONTINUE TO LIFT. TRANSITION TO SCORING STATE
+            case 10: // CONTINUE TO LIFT. TRANSITION TO SCORING STATE
                 robot.lift.updateLiftMotor();
                 if (!robot.lift.runToPos) {
                     curState = 101;
                 }
-            }
-            case 101: {
-                // GLYPHS LOADED. DRIVING TO SCORE STATE INITITATED
-                robot.intake.setOpen();
+                break;
+
+            case 101: // GLYPHS LOADED. DRIVING TO SCORE STATE INITITATED
+                if (curState != lastState) robot.intake.setOpen();
 
                 // Flip glyph
-                if (gamepad2.x && robot.lift.targetPos == robot.lift.LIFT_TOP_POS) {
-                    curState = 102;
-                }
-                // Lift to btm floor
-                if (gamepad2.a) {
-                    curState = 110;
-                }
-                // Lift to mid floor
-                if (gamepad2.b) {
-                    curState = 111;
-                }
-                // Lift to top floor
-                if (gamepad2.y) {
-                    curState = 112;
-                }
-            }
-            case 102: {
-                // FLIP SEQUENCE
-                robot.gripper.flip();
-                if (!robot.gripper.isFlipping()){
-                    curState = 101;
-                }
-            }
-            case 110: {
-                // MOVE TO BTM FLOOR
-                robot.lift.setLiftBtm();
-                if (robot.lift.runToPos) {
-                    robot.lift.updateLiftMotor();
-                } else curState = 101;
-            }
-            case 111: {
-                // MOVE TO MID FLOOR
-                robot.lift.setLiftMid();
-                if (robot.lift.runToPos) {
-                    robot.lift.updateLiftMotor();
-                } else curState = 101;
-            }
-            case 112: {
-                // MOVE TO TOP FLOOR
-                robot.lift.setLiftTop();
-                if (robot.lift.runToPos) {
-                    robot.lift.updateLiftMotor();
-                } else curState = 101;
-            }
-            case 120: {
-                // EXTEND PUSHER
+                if (gamepad2.x && robot.lift.targetPos == robot.lift.LIFT_TOP_POS) curState = 102;
+
+                    // Lift to btm floor
+                else if (gamepad2.a) curState = 110;
+
+                    // Lift to mid floor
+                else if (gamepad2.b) curState = 111;
+
+                    // Lift to top floor
+                else if (gamepad2.y) curState = 112;
+
+                    // Extend gripper out
+                else if (gamepad2.right_trigger > 0.2) curState = 120;
+
+                break;
+
+
+            case 102: // FLIP SEQUENCE
+                if (curState != lastState) robot.gripper.flip();
+                if (!robot.gripper.isFlipping()) curState = 101;
+                break;
+
+            case 110: // MOVE TO BTM FLOOR
+                if (curState != lastState) robot.lift.setLiftBtm();
+                if (robot.lift.runToPos) robot.lift.updateLiftMotor();
+                else curState = 101;
+                break;
+
+            case 111: // MOVE TO MID FLOOR
+                if (curState != lastState) robot.lift.setLiftMid();
+                if (robot.lift.runToPos) robot.lift.updateLiftMotor();
+                else curState = 101;
+                break;
+
+            case 112: // MOVE TO TOP FLOOR
+                if (curState != lastState) robot.lift.setLiftTop();
+                if (robot.lift.runToPos) robot.lift.updateLiftMotor();
+                else curState = 101;
+                break;
+
+            case 120: // EXTEND PUSHER
                 if (!robot.intake.isClosed()) {
                     robot.gripper.setExtendOut();
                     curState = 130;
                 }
-            }
-            case 130: {
-                // PLACE GLYPH
+                break;
+
+            case 130: // PLACE GLYPH
                 // retrieve pusher
                 if (gamepad2.left_trigger > 0.2) {
                     robot.gripper.setExtendIn();
                     curState = 101;
                 }
-                if (gamepad2.right_bumper && !robot.gripper.isExtending()) {
-                    robot.gripper.setBothPartialOpen();
-                }
-                if (gamepad2.left_bumper) {
-                    robot.gripper.setBothClosed();
-                }
+                // partially open grippers to drop glyphs without interfering with other stacked glyphs
+                if (gamepad2.right_bumper && !robot.gripper.isExtending()) robot.gripper.setBothPartialOpen();
+
+                // close grippers
+                if (gamepad2.left_bumper) robot.gripper.setBothClosed();
+
                 // RESET intake system
                 if (gamepad2.dpad_down) {
                     robot.gripper.setBothClosed();
                     curState = 777;
                 }
+                break;
 
-            }
-            case 777: {
-                // RESET FOR AUTO LOAD SEQUENCE
+            case 777: // RESET FOR AUTO LOAD SEQUENCE
                 if (!robot.gripper.isMoving()) {
+                    // reset lift position to btm
                     robot.lift.setLiftBtm();
+                    // reset gripper to in position
                     robot.gripper.setExtendIn();
+
                     if(robot.lift.runToPos) {
+                        // move lift
                         robot.lift.updateLiftMotor();
-                    } else if (!robot.lift.runToPos && !robot.gripper.isExtending()) {
+                    } else if (robot.gripper.isExtending()) {
                         // Return to driving state
-                        curState = 0;
+                        curState = 1000;
                     }
 
                 }
+                break;
 
-            }
+            case 1000: // RESET FLOOR POSITION AND RESET ENCODERS
+                if (robot.lift.liftMotor.getMode() != DcMotor.RunMode.STOP_AND_RESET_ENCODER) {
+                    robot.lift.reachedFloor();
+                } else {
+                    curState = 1001;
+                }
+                break;
 
+            case 1001: // TRANSITION BACK TO DRIVER CONTROL AFTER LIFT ENCODER HAS HAD TIME TO RESET
+                if (robot.lift.isResetComplete()) {
+                    robot.lift.liftMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+                    curState = 0;
+                }
+                break;
+
+            default:
+                intakeControl();
+                break;
         }
 
-
+        lastState = curState;
 
         // Give the intake a chance to adjust speeds in cycle
         robot.intake.updateInPower();   // Must be called each cycle for speed to vary properly
@@ -471,4 +502,3 @@ public class TeleOpDM18_IntakeSequenced extends OpMode {
 
 
 }
-
