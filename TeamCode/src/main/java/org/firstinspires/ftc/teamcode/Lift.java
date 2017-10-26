@@ -24,7 +24,7 @@ public class Lift {
 
     /* Lift constants */
     static final int        LIFT_COUNTS_PER_MOTOR_REV    = 7 ;    // Neverrest
-    static final double     LIFT_DRIVE_GEAR_REDUCTION    = 40*1.54;
+    static final double     LIFT_DRIVE_GEAR_REDUCTION    = 19.2;
     static final double     LIFT_PULLEY_DIAMETER_INCHES   = 0.955;     // For figuring circumference
     static final double     LIFT_COUNTS_PER_INCH         = (4 * LIFT_COUNTS_PER_MOTOR_REV * LIFT_DRIVE_GEAR_REDUCTION) /
             (LIFT_PULLEY_DIAMETER_INCHES * 3.1415);
@@ -102,13 +102,15 @@ public class Lift {
     }
 
     // Resets lift encoder to 0 using lift limit switch
-    public void resetFloorPos() {
+    public boolean resetFloorPos() {
         if (liftLimit.getState()) {
             liftMotor.setPower(-0.3);
+            return false;
         } else {
             liftMotor.setPower(0.0);
             liftMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
             liftTimer.reset();
+            return true;
         }
     }
 
@@ -119,8 +121,7 @@ public class Lift {
     }
 
     public boolean reachedFloor() {
-        // return if reached our destination
-        return true;
+        if (Math.abs(liftMotor.getCurrentPosition() - targetPos) > (0.5*LIFT_COUNTS_PER_INCH)) return true; else return false;
     }
 
 }
