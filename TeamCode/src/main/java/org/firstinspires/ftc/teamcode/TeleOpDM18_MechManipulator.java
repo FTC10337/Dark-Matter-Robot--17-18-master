@@ -32,6 +32,8 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.PIDCoefficients;
 import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
@@ -64,7 +66,7 @@ public class TeleOpDM18_MechManipulator extends OpMode {
     boolean resetLift = false;
     boolean plusCurState = false;
     boolean minusCurState = false;
-    boolean buttonPressed = false;
+    boolean isButtonPressed = false;
     double intakeDistance = 8.0;
     int curState = 0;
     int lastState = 0;
@@ -140,202 +142,221 @@ public class TeleOpDM18_MechManipulator extends OpMode {
 
 
         // Ability to change states. Each state gives controls to different robot mechanisms
-        if (gamepad1.dpad_right && !buttonPressed) {
+        if (gamepad2.dpad_right && !isButtonPressed) {
             curState += 1;
-            buttonPressed = true;
+            Range.clip(curState, 0, 11);
+            isButtonPressed = true;
             telemetry.clearAll();
-        } else if (gamepad1.dpad_left && !buttonPressed) {
+        } else if (gamepad2.dpad_left && !isButtonPressed) {
             curState -= 1;
-            buttonPressed = true;
+            Range.clip(curState, 0, 11);
+            isButtonPressed = true;
             telemetry.clearAll();
         }
 
-        if (!gamepad2.dpad_left && !gamepad2.dpad_right) buttonPressed = false;
-
-        Range.clip(curState, 0, 11);
+        if (!gamepad2.dpad_left && !gamepad2.dpad_right && isButtonPressed)isButtonPressed = false;
 
 
-        switch (curState) {
-            case 0: // GRIPPER BOTTOM
-                telemetry.addData("GRIPPER", "BOTTOM");
-                telemetry.addData("Pos: ", robot.gripper.btmGrip.getPosition());
-
-                Pos = robot.gripper.getBtmServoPos();
-
-                if (gamepad2.x) {
-                    Pos+=0.001;
-                } else if (gamepad2.b) {
-                    Pos+=0.001;
-                }
-
-                Range.clip(Pos, 0, 1);
-                robot.gripper.setBtmServoPos(Pos);
-                break;
-
-            case 1: // GRIPPER TOP
-                telemetry.addData("GRIPPER", "TOP");
-                telemetry.addData("Pos: ", robot.gripper.topGrip.getPosition());
-
-                Pos = robot.gripper.getTopServoPos();
-
-                if (gamepad2.x) {
-                    Pos+=0.001;
-                } else if (gamepad2.b) {
-                    Pos+=0.001;
-                }
-
-                Range.clip(Pos, 0, 1);
-                robot.gripper.setTopServoPos(Pos);
-                break;
-
-            case 2: // GRIPPER FLIP
-                telemetry.addData("GRIPPER", "FLIP");
-                telemetry.addData("Pos: ", robot.gripper.getRotServoPos());
-
-                Pos = robot.gripper.getRotServoPos();
-
-                if (gamepad2.x) {
-                    Pos+=0.001;
-                } else if (gamepad2.b) {
-                    Pos+=0.001;
-                }
-
-                Range.clip(Pos, 0, 1);
-                robot.gripper.setRotServoPos(Pos);
-                break;
-
-            case 3: // GRIPPER PUSHER
-                telemetry.addData("GRIPPER", "PUSHER");
-                telemetry.addData("Pos: ", robot.gripper.extendGrip.getPosition());
-
-                Pos = robot.gripper.extendGrip.getPosition();
-
-                if (gamepad2.x) {
-                    Pos+=0.001;
-                } else if (gamepad2.b) {
-                    Pos+=0.001;
-                }
-
-                Range.clip(Pos, 0, 1);
-                robot.gripper.extendGrip.setPosition(Pos);
-
-                break;
-
-            case 4: // INTAKE SERVO LEFT
-                telemetry.addData("INTAKE", "LEFT");
-                telemetry.addData("Pos: ", robot.intake.getLeftServoPos());
-
-                Pos = robot.intake.getLeftServoPos();
-
-                if (gamepad2.x) {
-                    Pos+=0.001;
-                } else if (gamepad2.b) {
-                    Pos+=0.001;
-                }
-
-                Range.clip(Pos, 0, 1);
-                robot.intake.setLeftServoPos(Pos);
-                break;
-
-            case 5: // INTAKE SERVO RIGHT
-                telemetry.addData("INTAKE", "RIGHT");
-                telemetry.addData("Pos: ", robot.intake.getRightServoPos());
-
-                Pos = robot.intake.getRightServoPos();
-
-                if (gamepad2.x) {
-                    Pos+=0.001;
-                } else if (gamepad2.b) {
-                    Pos+=0.001;
-                }
-
-                Range.clip(Pos, 0, 1);
-                robot.intake.setRightServoPos(Pos);
-                break;
-
-            case 6: // LIFT LIMIT SWITCH
-                telemetry.addData("LIFT", "LIMIT");
-                telemetry.addData("Pos: ", robot.lift.liftLimit.getState());
-                break;
-
-            case 7: // JEWEL ROTATE
-                telemetry.addData("JEWEL", "ROTATE");
-                telemetry.addData("Pos: ", robot.jewelRotServo.getPosition());
-
-                Pos = robot.jewelRotServo.getPosition();
-
-                if (gamepad2.x) {
-                    Pos+=0.001;
-                } else if (gamepad2.b) {
-                    Pos+=0.001;
-                }
-
-                Range.clip(Pos, 0, 1);
-                robot.jewelRotServo.setPosition(Pos);
-                break;
-
-            case 8: // JEWEL DEPLOY
-                telemetry.addData("JEWEL", "DEPLOY");
-                telemetry.addData("Pos: ", robot.jewelServo.getPosition());
-
-                Pos = robot.jewelServo.getPosition();
-
-                if (gamepad2.x) {
-                    Pos+=0.001;
-                } else if (gamepad2.b) {
-                    Pos+=0.001;
-                }
-
-                Range.clip(Pos, 0, 1);
-                robot.jewelServo.setPosition(Pos);
-                break;
-
-            case 9:// DISTANCE SENSOR
-                telemetry.addData("DISTANCE", "SENSOR");
-                telemetry.addData("Distance: ", robot.jewelDS.getDistance(DistanceUnit.CM));
-                break;
-
-            case 10: // LIFT MOTOR
-                telemetry.addData("LIFT", "MOTOR");
-                telemetry.addData("EncPos: ", robot.lift.liftMotor.getCurrentPosition());
-
-                if (gamepad2.x) {
-                    robot.lift.liftMotor.setPower(0.3);
-                } else if (gamepad2.b) {
-                    robot.lift.liftMotor.setPower(-0.3);
-                } else robot.lift.liftMotor.setPower(0.0);
-
-                if (gamepad2.y) {
-                    robot.lift.setLiftTop();
-                } else if (gamepad2.a && robot.lift.resetFloorPos()) {
-                    robot.lift.resetFloorPos();
-                } else if (!robot.lift.resetFloorPos()) {
-                    robot.lift.liftMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-                }
-
-                robot.lift.updateLiftMotor();
 
 
-                break;
+            switch (curState) {
+                case 0: // GRIPPER BOTTOM
+                    telemetry.addData("GRIPPER", "BOTTOM");
+                    telemetry.addData("Pos: ", robot.gripper.btmGrip.getPosition());
 
-            case 11: // INTAKE MOTORS
-                telemetry.addData("lPower", robot.intake.lInPower);
-                telemetry.addData("rPower", robot.intake.rInPower);
-                telemetry.addData("Cycle: ", robot.intake.intakeCycle);
-                intakeControl();
-                break;
+                    Pos = robot.gripper.getBtmServoPos();
 
-            default:
-                telemetry.addData("THIS SHOULD", "NEVER SHOW");
-                break;
+                    if (gamepad2.x) {
+                        Pos += 0.001;
+                    } else if (gamepad2.b) {
+                        Pos -= 0.001;
+                    }
+
+                    Range.clip(Pos, 0, 1);
+                    robot.gripper.setBtmServoPos(Pos);
+                    break;
+
+                case 1: // GRIPPER TOP
+                    telemetry.addData("GRIPPER", "TOP");
+                    telemetry.addData("Pos: ", robot.gripper.topGrip.getPosition());
+
+                    Pos = robot.gripper.getTopServoPos();
+
+                    if (gamepad2.x) {
+                        Pos += 0.001;
+                    } else if (gamepad2.b) {
+                        Pos -= 0.001;
+                    }
+
+                    Range.clip(Pos, 0, 1);
+                    robot.gripper.setTopServoPos(Pos);
+                    break;
+
+                case 2: // GRIPPER FLIP
+                    telemetry.addData("GRIPPER", "FLIP");
+                    telemetry.addData("Pos: ", robot.gripper.getRotServoPos());
+
+                    Pos = robot.gripper.getRotServoPos();
+
+                    if (gamepad2.x) {
+                        Pos += 0.001;
+                        Range.clip(Pos, 0, 1);
+                        robot.gripper.setRotServoPos(Pos);
+                    } else if (gamepad2.b) {
+                        Pos -= 0.001;
+                        Range.clip(Pos, 0, 1);
+                        robot.gripper.setRotServoPos(Pos);
+                    }
+
+                    if (gamepad2.right_bumper && !robot.gripper.isFlipping()) robot.gripper.flip();
+
+                    break;
+
+                case 3: // GRIPPER PUSHER
+                    telemetry.addData("GRIPPER", "PUSHER");
+                    telemetry.addData("Pos: ", robot.gripper.extendGrip.getPosition());
+
+                    Pos = robot.gripper.extendGrip.getPosition();
+
+                    if (gamepad2.x) {
+                        Pos += 0.001;
+                    } else if (gamepad2.b) {
+                        Pos -= 0.001;
+                    }
+
+                    Range.clip(Pos, 0, 1);
+                    robot.gripper.extendGrip.setPosition(Pos);
+
+                    break;
+
+                case 4: // INTAKE SERVO LEFT
+                    telemetry.addData("INTAKE", "LEFT");
+                    telemetry.addData("Pos: ", robot.intake.getLeftServoPos());
+
+                    Pos = robot.intake.getLeftServoPos();
+
+                    if (gamepad2.x) {
+                        Pos += 0.001;
+                    } else if (gamepad2.b) {
+                        Pos -= 0.001;
+                    }
+
+                    Range.clip(Pos, 0, 1);
+                    robot.intake.setLeftServoPos(Pos);
+                    break;
+
+                case 5: // INTAKE SERVO RIGHT
+                    telemetry.addData("INTAKE", "RIGHT");
+                    telemetry.addData("Pos: ", robot.intake.getRightServoPos());
+
+                    Pos = robot.intake.getRightServoPos();
+
+                    if (gamepad2.x) {
+                        Pos += 0.001;
+                    } else if (gamepad2.b) {
+                        Pos -= 0.001;
+                    }
+
+                    Range.clip(Pos, 0, 1);
+                    robot.intake.setRightServoPos(Pos);
+                    break;
+
+                case 6: // LIFT LIMIT SWITCH
+                    telemetry.addData("LIFT", "LIMIT");
+                    telemetry.addData("Pos: ", robot.lift.liftLimit.getState());
+                    break;
+
+                case 7: // JEWEL ROTATE
+                    telemetry.addData("JEWEL", "ROTATE");
+                    telemetry.addData("Pos: ", robot.jewelRotServo.getPosition());
+
+                    Pos = robot.jewelRotServo.getPosition();
+
+                    if (gamepad2.x) {
+                        Pos += 0.001;
+                    } else if (gamepad2.b) {
+                        Pos -= 0.001;
+                    }
+
+                    Range.clip(Pos, 0, 1);
+                    robot.jewelRotServo.setPosition(Pos);
+                    break;
+
+                case 8: // JEWEL DEPLOY
+                    telemetry.addData("JEWEL", "DEPLOY");
+                    telemetry.addData("Pos: ", robot.jewelServo.getPosition());
+
+                    Pos = robot.jewelServo.getPosition();
+
+                    if (gamepad2.x) {
+                        Pos += 0.001;
+                    } else if (gamepad2.b) {
+                        Pos -= 0.001;
+                    }
+
+                    Range.clip(Pos, 0, 1);
+                    robot.jewelServo.setPosition(Pos);
+                    break;
+
+                case 9:// DISTANCE SENSOR
+                    telemetry.addData("DISTANCE", "SENSOR");
+                    telemetry.addData("Distance: ", robot.jewelDS.getDistance(DistanceUnit.CM));
+                    break;
+
+                case 10: // LIFT MOTOR
+                    telemetry.addData("LIFT", "MOTOR");
+                    telemetry.addData("EncPos: ", robot.lift.liftMotor.getCurrentPosition());
+                    // Tune the motor PID parameters
+                    if (robot.lift.liftMotor instanceof DcMotorEx) {
+                        DcMotorEx theLift = (DcMotorEx) robot.lift.liftMotor;
+                        PIDCoefficients pid = theLift.getPIDCoefficients(DcMotor.RunMode.RUN_TO_POSITION);
+                        telemetry.addData("p: ", pid.p);
+                        telemetry.addData("i: ", pid.i);
+                        telemetry.addData("d: ", pid.d);
+                        telemetry.update();
+                    }
+                    if (gamepad2.right_stick_y > 0.2 || gamepad2.right_stick_y < -0.2){
+                        robot.lift.liftMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+                        double liftPower = -gamepad2.right_stick_y;
+                        liftPower = smoothPowerCurve(deadzone(liftPower, 0.10));
+                        Range.clip(liftPower, -1, 1);
+                        robot.lift.liftMotor.setPower(liftPower);
+                    }
+
+                    if (gamepad2.y) {
+                        robot.lift.setLiftTop();
+                    }
+                    if (gamepad2.a) {
+                        robot.lift.setLiftBtm();
+                    }
+                    if (gamepad2.right_bumper) {
+                        resetLift = true;
+                    }
+
+                    if (resetLift) {
+                        robot.lift.resetFloorPos();
+                        if (robot.lift.resetFloorPos()){
+                            resetLift = false;
+                        }
+                    }
+                    break;
+
+                case 11: // INTAKE MOTORS
+                    telemetry.addData("lPower", robot.intake.lInPower);
+                    telemetry.addData("rPower", robot.intake.rInPower);
+                    telemetry.addData("Cycle: ", robot.intake.intakeCycle);
+                    intakeControl();
+                    break;
+
+                default:
+                    telemetry.addData("THIS SHOULD", "NEVER SHOW");
+                    break;
+            }
+
+            lastState = curState;
+
         }
 
-        lastState = curState;
-
-        // Give the intake a chance to adjust speeds in cycle
-        robot.intake.updateInPower();   // Must be called each cycle for speed to vary properly
-
-    }
     /*
      * Code to run ONCE after the driver hits STOP
      */
@@ -405,6 +426,8 @@ public class TeleOpDM18_MechManipulator extends OpMode {
     public void intakeControl()
     {
 
+        // Give the intake a chance to adjust speeds in cycle
+        robot.intake.updateInPower();   // Must be called each cycle for speed to vary properly
 
         // Intake IN
         if (gamepad1.right_trigger > 0.5) {

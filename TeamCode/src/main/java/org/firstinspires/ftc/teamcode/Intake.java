@@ -20,10 +20,10 @@ public class Intake {
     Servo intakeRightServo = null;
 
     // Intake constants
-    final static double INTAKE_LEFT_HOME = 0.94;
-    final static double INTAKE_LEFT_RELEASE = 0.61;
-    final static double INTAKE_RIGHT_HOME = 0.11;
-    final static double INTAKE_RIGHT_RELEASE = 0.32;
+    final static double INTAKE_LEFT_HOME = 1.0;
+    final static double INTAKE_LEFT_RELEASE = 0.6;
+    final static double INTAKE_RIGHT_HOME = 0.0;
+    final static double INTAKE_RIGHT_RELEASE = 0.35;
     final static double INTAKE_MOVE_TIME = 500;      // 0.5 seconds to open or close intake
     final static double MAX_IN_POWER = 1.0;
     final static double MIN_IN_POWER = 0.6;
