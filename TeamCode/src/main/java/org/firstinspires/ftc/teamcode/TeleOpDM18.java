@@ -282,7 +282,7 @@ public class TeleOpDM18 extends OpMode {
             }
 
         // Intake STOP
-        if (intake == true && robot.jewelDS.getDistance(DistanceUnit.CM) < 7.0) {
+        if (intake && robot.intake.detechGlyph()) {
             robot.intake.setStop();
             intake = false;
             }

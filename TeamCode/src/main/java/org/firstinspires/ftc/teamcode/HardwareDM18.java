@@ -72,7 +72,6 @@ public class HardwareDM18
     public Servo    jewelRotServo    = null;
 
     public ColorSensor  jewelCS = null;
-    public DistanceSensor jewelDS = null;
 
     BNO055IMU adaGyro;
 
@@ -132,7 +131,7 @@ public class HardwareDM18
         rightDrive2.setDirection(DcMotor.Direction.FORWARD);// Set to FORWARD if using AndyMark motors
 
         // Setup intake mapped to hardware
-        intake.init(hwMap, "intakeLeft", "intakeRight", "ils", "irs");
+        intake.init(hwMap, "intakeLeft", "intakeRight", "ils", "irs", "ds");
 
         // Setup gripper mapped to hardware
         gripper.init(hwMap, "gripTop", "gripBottom", "gripRotate", "gripExtend");
@@ -173,9 +172,6 @@ public class HardwareDM18
 
         // Define color sensor
         jewelCS = hwMap.colorSensor.get("cs");
-
-        // Define distance sensor
-        jewelDS = hwMap.get(DistanceSensor.class, "ds");
 
         AdafruitBNO055IMU.Parameters parameters = new AdafruitBNO055IMU.Parameters();
         parameters.angleUnit           = AdafruitBNO055IMU.AngleUnit.DEGREES;
@@ -223,3 +219,4 @@ public class HardwareDM18
 
     }
 }
+

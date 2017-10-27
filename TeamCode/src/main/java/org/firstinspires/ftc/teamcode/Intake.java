@@ -1,11 +1,15 @@
 
+
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.Range;
 import com.qualcomm.robotcore.util.ElapsedTime;
+
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 
 
 /**
@@ -18,6 +22,10 @@ public class Intake {
     DcMotor intakeRightMotor = null;
     Servo intakeLeftServo = null;
     Servo intakeRightServo = null;
+
+
+    // Digital channel - distance sensor
+    public DistanceSensor distanceSensor = null;
 
     // Intake constants
     final static double INTAKE_LEFT_HOME = 1.0;
@@ -38,6 +46,7 @@ public class Intake {
     // Place to track desired left/right motor power as we cycle them
     double rInPower = 0.0;
     double lInPower = 0.0;
+    double intakeDistance = 9.0;
 
     // Timer to tell if intake is still opening/closing
     ElapsedTime timer = new ElapsedTime();
@@ -58,7 +67,7 @@ public class Intake {
      * @param ls Name of left intake arm servo
      * @param rs Name of right intake arm servo
      */
-    public void init(HardwareMap hw, String lm, String rm, String ls, String rs) {
+    public void init(HardwareMap hw, String lm, String rm, String ls, String rs, String ds) {
         // Define and Initialize intake Motors
         intakeLeftMotor = hw.dcMotor.get(lm);
         intakeRightMotor = hw.dcMotor.get(rm);
@@ -73,8 +82,13 @@ public class Intake {
         // Define and initialize Intake servos
         intakeLeftServo = hw.servo.get(ls);
         intakeRightServo = hw.servo.get(rs);
-        setClosed();
+        setOpen();
+
+        // Define distance sensor
+        distanceSensor = hw.get(DistanceSensor.class, ds);
+
     }
+
 
     /**
      * Open the intake
@@ -125,28 +139,28 @@ public class Intake {
                 // In 1st half of cycle
                 rInPower = rInPower + IN_POWER_DELTA;
                 lInPower = lInPower - IN_POWER_DELTA;
-                } else {
-                  // In 2nd half of cycle
-                  lInPower = lInPower + IN_POWER_DELTA;
-                  rInPower = rInPower - IN_POWER_DELTA;
-                }
-
-                // Reached end so reverse our direction
-                if (rInPower > MAX_IN_POWER) {
-                    intakeCycle = false;
-                } else if (lInPower > MAX_IN_POWER) {
-                    intakeCycle = true; }
-
-                Range.clip(lInPower, MIN_IN_POWER, MAX_IN_POWER);
-                Range.clip(rInPower, MIN_IN_POWER, MAX_IN_POWER);
-
-
-
-                // Set updated motor power
-                intakeRightMotor.setPower(rInPower);
-                intakeLeftMotor.setPower(lInPower);
+            } else {
+                // In 2nd half of cycle
+                lInPower = lInPower + IN_POWER_DELTA;
+                rInPower = rInPower - IN_POWER_DELTA;
             }
+
+            // Reached end so reverse our direction
+            if (rInPower > MAX_IN_POWER) {
+                intakeCycle = false;
+            } else if (lInPower > MAX_IN_POWER) {
+                intakeCycle = true; }
+
+            Range.clip(lInPower, MIN_IN_POWER, MAX_IN_POWER);
+            Range.clip(rInPower, MIN_IN_POWER, MAX_IN_POWER);
+
+
+
+            // Set updated motor power
+            intakeRightMotor.setPower(rInPower);
+            intakeLeftMotor.setPower(lInPower);
         }
+    }
 
 
     /**
@@ -229,4 +243,9 @@ public class Intake {
         pos = Range.clip(pos, 0.0, 1.0);
         intakeRightServo.setPosition(pos);
     }
+
+    public boolean detechGlyph() {
+        if (distanceSensor.getDistance(DistanceUnit.CM) < intakeDistance) return true; else return false;
+    }
 }
+
