@@ -138,7 +138,7 @@ public class Auto_Collect_Test extends LinearOpMode {
     public void runOpMode() throws InterruptedException {
 
         // Init the robot hardware -- including gyro and range finder
-        robot.init(hardwareMap);
+        robot.init(hardwareMap, true);
 
         // Force reset the drive train encoders.  Do it twice as sometimes this gets missed due to USB congestion
         robot.setDriveMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -236,135 +236,9 @@ public class Auto_Collect_Test extends LinearOpMode {
         RobotLog.i("DM10337 - Gyro bias set to " + headingBias);
 
 
-               /*
-
-         JEWEL CODE
-
-          */
-
-        double armPos = robot.jewelServo.getPosition();
-        double armIncr = (robot.JEWEL_DEPLOY - armPos)/25;
-        while (armPos < robot.JEWEL_DEPLOY) {
-            armPos += armIncr;
-            robot.jewelServo.setPosition(armPos);
-            sleep(20);
-        }
-
-        robot.jewelCS.enableLed(true);
-        sleep(1500);
-
-        int jewelColor = JewelColor();
-
-        // Check if we see blue or red
-        if (jewelColor == -1) {
-            // We see red
-            robot.jewelRotServo.setPosition(iAmBlue()?robot.JEWEL_ROT_REV:robot.JEWEL_ROT_FWD);
-            sleep(500);
-        } else if (jewelColor == 1) {
-            // We see blue
-            robot.jewelRotServo.setPosition(iAmBlue()?robot.JEWEL_ROT_FWD:robot.JEWEL_ROT_REV);
-            sleep(500);
-        } else {
-            // We saw neither blue nor red so do nothing
-            sleep(500);
-        }
-
-        // Reset jewel arm
-        robot.jewelRotServo.setPosition(robot.JEWEL_ROT_HOME);
-        armPos = robot.jewelServo.getPosition();
-        armIncr = (robot.JEWEL_HOME - armPos)/25;
-        while (armPos > robot.JEWEL_HOME) {
-            armPos += armIncr;
-            robot.jewelServo.setPosition(armPos);
-            sleep(20);
-        }
-        //robot.jewelServo.setPosition(robot.JEWEL_HOME);
-        sleep(500);
-        robot.jewelCS.enableLed(false);
-
-
-        // Lift preloaded glyph to mid position for driving
-        robot.lift.setLiftMid();
-
-        /*
-
-        CRYPTO CODE
-
-         */
-
-        RelicRecoveryVuMark vuMark = RelicRecoveryVuMark.from(relicTemplate);
-
-        telemetry.addData("VuMark", "%s visible", vuMark);
-
-
-        if (vuMark == RelicRecoveryVuMark.CENTER || vuMark == RelicRecoveryVuMark.UNKNOWN) {
-            // Drive forward to lineup with center cryptoglyph
-            if (iAmBlue()) {
-                encoderDrive(0.5, 32.0, 5.0, false, 0.0);
-            } else {
-                encoderDrive(0.5, -36.0, 5.0, false, 0.0);
-            }
-            // Turn toward center cryptoglyph
-            gyroTurn(0.8, 90, P_TURN_COEFF);
-            // Drive closer to center cryptoglyph
-            encoderDrive(0.5, 9.5, 3.0, false, 90);
-            // Outake glyph
-            robot.gripper.setExtendOut();
-            robot.lift.setLiftBtm();
-            idleWhile(robot.gripper.isExtending() || !robot.lift.reachedFloor());
-            robot.gripper.setBothPartialOpen();
-            idleWhile(robot.gripper.isMoving());
-            robot.gripper.setExtendIn();
-        }
-        if (vuMark == RelicRecoveryVuMark.RIGHT) {
-            // Drive forward to lineup with center cryptoglyph
-            if (iAmBlue()) {
-                encoderDrive(0.5, 32.0+7.5, 5.0, false, 0.0);
-            } else {
-                encoderDrive(0.5, -36.0+7.5, 5.0, false, 0.0);
-            }
-            // Turn toward center cryptoglyph
-            gyroTurn(0.8, 90, P_TURN_COEFF);
-            // Drive closer to center cryptoglyph
-            encoderDrive(0.5, 9.5, 3.0, false, 90);
-            // Outake glyph
-            robot.gripper.setExtendOut();
-            robot.lift.setLiftBtm();
-            idleWhile(robot.gripper.isExtending() || !robot.lift.reachedFloor());
-            robot.gripper.setBothPartialOpen();
-            idleWhile(robot.gripper.isMoving());
-            robot.gripper.setExtendIn();
-        }
-        if (vuMark == RelicRecoveryVuMark.LEFT) {
-            // Drive forward to lineup with center cryptoglyph
-            if (iAmBlue()) {
-                encoderDrive(0.5, 32.0-7.5, 5.0, false, 0.0);
-            } else {
-                encoderDrive(0.5, -36.0-7.5, 5.0, false, 0.0);
-            }
-            // Turn toward center cryptoglyph
-            gyroTurn(0.8, 90, P_TURN_COEFF);
-            // Drive closer to center cryptoglyph
-            encoderDrive(0.5, 9.5, 3.0, false, 90);
-            // Outake glyph
-            robot.gripper.setExtendOut();
-            robot.lift.setLiftBtm();
-            idleWhile(robot.gripper.isExtending() || !robot.lift.reachedFloor());
-            robot.gripper.setBothPartialOpen();
-            idleWhile(robot.gripper.isMoving());
-            robot.gripper.setExtendIn();
-        }
-
-
         robot.lift.resetFloorPos();
-        // Drive back, but stay in safe zone
-        encoderDrive(0.6, -15.0, 3.0, true, 90);
 
-        sleep(500);
-
-        gyroTurn(0.8, -90, P_TURN_COEFF);
-
-        sleep (500);
+        idleWhile(robot.lift.reachedFloor());
 
         int left1Pos = robot.leftDrive1.getCurrentPosition();
         int left2Pos = robot.leftDrive2.getCurrentPosition();
@@ -372,7 +246,7 @@ public class Auto_Collect_Test extends LinearOpMode {
         int right2Pos = robot.rightDrive2.getCurrentPosition();
 
         // Attempt to collect glyph into intake
-        collectGlyph(0.25, 5, true, -90);
+        collectGlyph(0.25, 5, true, 0);
 
         // Determine if glyph is in intake. If so, auto load first glyph and take account for it.
         if (robot.intake.detechGlyph()) {
@@ -381,7 +255,7 @@ public class Auto_Collect_Test extends LinearOpMode {
         }
 
         // Attempt to collect glyph into intake
-        collectGlyph(0.25, 2,true, -90);
+        collectGlyph(0.25, 2,true, 0);
 
         // Determine if glyph is in intake. If so, auto load glyph as first or second depending on whether one was previously loaded or not.
         if (robot.intake.detechGlyph() && glyphsCollected == 1) {
@@ -391,16 +265,17 @@ public class Auto_Collect_Test extends LinearOpMode {
         }
 
         // Return to original location - safe zone
-        returnToPosition(0.5, left1Pos, left2Pos, right1Pos, right2Pos, 5.0, true, -90);
+        returnToPosition(0.5, left1Pos, left2Pos, right1Pos, right2Pos, 5.0, true, 0);
+
         sleep(500);
 
         // If one or more glyphs are loaded, attempt to score them.
         if (glyphsCollected > 0){
-            gyroTurn(0.8, 90, P_TURN_COEFF);
+            gyroTurn(0.8, 180, P_TURN_COEFF);
 
             sleep (500);
 
-            encoderDrive(0.6, 15, 3, true, 90);
+            encoderDrive(0.6, 15, 3, true, 180);
 
             sleep (500);
 
@@ -414,12 +289,12 @@ public class Auto_Collect_Test extends LinearOpMode {
 
             robot.gripper.setBothPartialOpen();
 
-            idleWhile(robot.gripper.isMoving());
+            sleep(250);
+
+            encoderDrive(0.5, -10, 3, false, 180);
 
             robot.gripper.setExtendIn();
         }
-
-
 
 
 

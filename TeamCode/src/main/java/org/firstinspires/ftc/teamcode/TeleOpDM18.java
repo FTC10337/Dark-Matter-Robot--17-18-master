@@ -85,7 +85,7 @@ public class TeleOpDM18 extends OpMode {
         /* Initialize the hardware variables.
          * The init() method of the hardware class does all the work here
          */
-        robot.init(hardwareMap);
+        robot.init(hardwareMap, true);
 
 
 

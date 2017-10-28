@@ -138,7 +138,7 @@ public class Auto_Jewel_Blue extends LinearOpMode {
     public void runOpMode() throws InterruptedException {
 
         // Init the robot hardware -- including gyro and range finder
-        robot.init(hardwareMap);
+        robot.init(hardwareMap, true);
 
         // Force reset the drive train encoders.  Do it twice as sometimes this gets missed due to USB congestion
         robot.setDriveMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -414,7 +414,9 @@ public class Auto_Jewel_Blue extends LinearOpMode {
 
             robot.gripper.setBothPartialOpen();
 
-            idleWhile(robot.gripper.isMoving());
+            sleep(250);
+
+            encoderDrive(0.5, -10, 3, false, 180);
 
             robot.gripper.setExtendIn();
         }

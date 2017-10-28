@@ -32,14 +32,9 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorEx;
-import com.qualcomm.robotcore.hardware.PIDCoefficients;
-import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
-
-import static java.lang.Double.NaN;
 
 /**
  * This file provides basic Telop driving for a Pushbot robot.
@@ -65,9 +60,14 @@ public class TeleOpDM18_IntakeSequenced extends OpMode {
     // could also use HardwarePushbotMatrix class.
 
 
+    boolean initStart = true;
     boolean intake = false;
-    int curState = 0;
+    boolean runOnce = false;
+
+
+    int curState = -3;
     int lastState = 0;
+
     double intakeDistance = 9.0;
 
     /*
@@ -78,7 +78,7 @@ public class TeleOpDM18_IntakeSequenced extends OpMode {
         /* Initialize the hardware variables.
          * The init() method of the hardware class does all the work here
          */
-        robot.init(hardwareMap);
+        robot.init(hardwareMap, false);
 
 
 
@@ -150,7 +150,37 @@ public class TeleOpDM18_IntakeSequenced extends OpMode {
         if (gamepad1.right_bumper && gamepad2.right_bumper ) curState = 777;
 
         switch (curState) {
-            case 0: // BEGINNING OF TELEOP
+            case -3: // INIT DRIVER CONTROL _ RESET LIFT TO TOP AND INIT GRIPPER
+                if (initStart){
+                    robot.lift.setLiftTop(); // set lift to top position
+                    initStart = false;
+                }
+                if (!initStart && robot.lift.reachedFloor()) {
+                    // initiates gripper. Init will set grippers closed, flipped in correct orientation, and pusher in home position.
+                    robot.gripper.init(hardwareMap, "gripTop", "gripBottom", "gripRotate", "gripExtend");
+                    // open grippers
+                    robot.gripper.setBothOpen();
+                    curState = -2;
+                }
+                break;
+
+            case -2: // INIT DRIVER CONTROL _ DROP LIFT TO FLOOR
+                if (!robot.gripper.isFlipping()) {
+                    robot.lift.setLiftBtm();
+                }
+                if (!robot.gripper.isFlipping() && robot.lift.reachedFloor()){
+                    robot.lift.resetFloorPos();
+                    curState = -1;
+                }
+                break;
+
+            case -1: // RESET FLOOR POSITION
+                if (robot.lift.resetFloorPos()) {
+                    curState = 0;
+                }
+                break;
+
+            case 0: // TELEOP DRIVER CONTROL
                 if (curState != lastState) {
                     robot.intake.setClosed();
                     robot.gripper.setBothOpen();
@@ -289,38 +319,61 @@ public class TeleOpDM18_IntakeSequenced extends OpMode {
                 if (gamepad2.x && robot.lift.targetPos == robot.lift.LIFT_TOP_POS && robot.lift.reachedFloor()) curState = 102;
 
                     // Lift to btm floor
-                else if (gamepad2.a) curState = 110;
+                else if (gamepad2.a) {
+                    runOnce = true;
+                    curState = 110;
+                }
 
                     // Lift to mid floor
-                else if (gamepad2.b) curState = 111;
+                else if (gamepad2.b) {
+                    runOnce = true;
+                    curState = 111;
+                }
 
                     // Lift to top floor
-                else if (gamepad2.y) curState = 112;
+                else if (gamepad2.y) {
+                    runOnce = true;
+                    curState = 112;
+                }
 
                     // Extend gripper out
-                else if (gamepad2.right_trigger > 0.2) curState = 120;
+                else if (gamepad2.right_trigger > 0.2) {
+                    curState = 120;
+                }
 
                 break;
 
 
             case 102: // FLIP SEQUENCE
-                if (curState != lastState) robot.gripper.flip();
-                if (!robot.gripper.isFlipping()) curState = 101;
+                if (runOnce) robot.gripper.flip();
+                if (!robot.gripper.isFlipping()){
+                    curState = 101;
+                    runOnce = false;
+                }
                 break;
 
             case 110: // MOVE TO BTM FLOOR
-                if (curState != lastState) robot.lift.setLiftBtm();
-                if (robot.lift.reachedFloor()) curState = 101;
+                if (runOnce) robot.lift.setLiftBtm();
+                if (robot.lift.reachedFloor()) {
+                    curState = 101;
+                    runOnce = false;
+                }
                 break;
 
             case 111: // MOVE TO MID FLOOR
-                if (curState != lastState) robot.lift.setLiftMid();
-                if (robot.lift.reachedFloor()) curState = 101;
+                if (runOnce) robot.lift.setLiftMid();
+                if (robot.lift.reachedFloor()) {
+                    curState = 101;
+                    runOnce = false;
+                }
                 break;
 
             case 112: // MOVE TO TOP FLOOR
-                if (curState != lastState) robot.lift.setLiftTop();
-                if (robot.lift.reachedFloor()) curState = 101;
+                if (runOnce) robot.lift.setLiftTop();
+                if (robot.lift.reachedFloor()) {
+                    curState = 101;
+                    runOnce = false;
+                }
                 break;
 
             case 120: // EXTEND PUSHER
@@ -369,15 +422,9 @@ public class TeleOpDM18_IntakeSequenced extends OpMode {
                     robot.lift.resetFloorPos(); // Reset floor encoder position
                 } else if (robot.lift.resetFloorPos()){
                     robot.lift.liftMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER); // Return lift motor to normal mode
-                    curState = 1001; // Go to next state after floor encoder position has been reset
+                    curState = 0; // Go to next state after floor encoder position has been reset
                 }
                 break;
-
-            case 1001: // TRANSITION BACK TO DRIVER CONTROL AFTER LIFT ENCODER HAS HAD TIME TO RESET
-                if (robot.lift.liftTimer.milliseconds() > 1000) {
-                    robot.lift.liftMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-                    curState = 0;
-                }
 
             default:
                 intakeControl();
@@ -467,7 +514,7 @@ public class TeleOpDM18_IntakeSequenced extends OpMode {
         }
 
         // Intake STOP
-        if (intake == true && robot.intake.detechGlyph()) {
+        if (intake && robot.intake.detechGlyph()) {
             robot.intake.setStop();
             intake = false;
         }

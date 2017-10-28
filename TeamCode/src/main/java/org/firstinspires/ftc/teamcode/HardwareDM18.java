@@ -115,7 +115,7 @@ public class HardwareDM18
     }
 
     /* Initialize standard Hardware interfaces */
-    public void init(HardwareMap ahwMap) {
+    public void init(HardwareMap ahwMap, boolean initGripper) {
         // Save reference to Hardware map
         hwMap = ahwMap;
 
@@ -133,8 +133,10 @@ public class HardwareDM18
         // Setup intake mapped to hardware
         intake.init(hwMap, "intakeLeft", "intakeRight", "ils", "irs", "ds");
 
-        // Setup gripper mapped to hardware
-        gripper.init(hwMap, "gripTop", "gripBottom", "gripRotate", "gripExtend");
+        if (initGripper){
+            // Setup gripper mapped to hardware
+            gripper.init(hwMap, "gripTop", "gripBottom", "gripRotate", "gripExtend");
+        }
 
         // Setup lift mapped to hardware
         lift.init(hwMap, "lift", "liftlimit");

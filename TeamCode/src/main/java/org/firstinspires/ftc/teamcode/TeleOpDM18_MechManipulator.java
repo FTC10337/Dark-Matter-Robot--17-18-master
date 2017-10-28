@@ -79,7 +79,7 @@ public class TeleOpDM18_MechManipulator extends OpMode {
         /* Initialize the hardware variables.
          * The init() method of the hardware class does all the work here
          */
-        robot.init(hardwareMap);
+        robot.init(hardwareMap, true);
 
 
 
