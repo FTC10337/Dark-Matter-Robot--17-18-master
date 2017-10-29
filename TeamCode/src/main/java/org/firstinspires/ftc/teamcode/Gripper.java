@@ -22,17 +22,17 @@ public class Gripper {
     public final static double GRIP_OPEN = 1.0;
     public final static double GRIP_PARTIAL_OPEN = 0.5;
     public final static double GRIP_CLOSED = 0.1;
-    public final static double GRIP_ROTATE_NORMAL = 0.005;
-    public final static double GRIP_ROTATE_FLIPPED = .95;
-    public final static double GRIP_EXTEND_HOME = 0.58;
-    public final static double GRIP_EXTEND_OUT = .88;
+    public final static double GRIP_ROTATE_NORMAL = 0.95;
+    public final static double GRIP_ROTATE_FLIPPED = .005;
+    public final static double GRIP_EXTEND_HOME = 0.585;
+    public final static double GRIP_EXTEND_OUT = 1.0;
     public final static double FLIP_TIME = 1000;        // 1 second for servo to flip gripper
     public final static double GRIP_TIME = 1000;        // 1 second for grip to open or close
     public final static double EXTEND_TIME = 500;
 
     /* Gripper state variables */
-    Servo topGrip = blackGrip;        // Should start w/ purple gripper on top
-    Servo btmGrip = purpleGrip;         // and black on bottom
+    Servo topGrip = purpleGrip;        // Should start w/ purple gripper on top
+    Servo btmGrip = blackGrip;         // and black on bottom
     boolean isGripFlipped = false;
 
     /* Flip flipTimer */
@@ -82,6 +82,7 @@ public class Gripper {
         isGripFlipped = false;
 
         setFlipped(false);
+        setExtendIn();
         setBothClosed();
     }
 

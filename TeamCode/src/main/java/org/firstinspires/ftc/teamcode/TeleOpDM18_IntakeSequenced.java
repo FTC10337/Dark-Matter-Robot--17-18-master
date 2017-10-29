@@ -63,6 +63,7 @@ public class TeleOpDM18_IntakeSequenced extends OpMode {
     boolean initStart = true;
     boolean intake = false;
     boolean runOnce = false;
+    boolean reset = false;
 
 
     int curState = -3;
@@ -100,7 +101,7 @@ public class TeleOpDM18_IntakeSequenced extends OpMode {
      */
     @Override
     public void start() {
-        robot.gripper.setBothOpen();
+
     }
 
     /*
@@ -151,13 +152,9 @@ public class TeleOpDM18_IntakeSequenced extends OpMode {
 
         switch (curState) {
             case -3: // INIT DRIVER CONTROL _ RESET LIFT TO TOP AND INIT GRIPPER
-                if (initStart){
-                    robot.lift.setLiftTop(); // set lift to top position
-                    initStart = false;
-                }
-                if (!initStart && robot.lift.reachedFloor()) {
+                if (robot.lift.resetTopPos()){
                     // initiates gripper. Init will set grippers closed, flipped in correct orientation, and pusher in home position.
-                    robot.gripper.init(hardwareMap, "gripTop", "gripBottom", "gripRotate", "gripExtend");
+                    robot.gripper.init(hardwareMap, "gripP", "gripB", "gripRotate", "gripExtend");
                     // open grippers
                     robot.gripper.setBothOpen();
                     curState = -2;
@@ -181,9 +178,10 @@ public class TeleOpDM18_IntakeSequenced extends OpMode {
                 break;
 
             case 0: // TELEOP DRIVER CONTROL
-                if (curState != lastState) {
+                if (runOnce) {
                     robot.intake.setClosed();
                     robot.gripper.setBothOpen();
+                    runOnce = false;
                 }
                 // If driver_1 starts intake, move on to next state
                 if (gamepad1.right_trigger > 0.2) {
@@ -244,14 +242,14 @@ public class TeleOpDM18_IntakeSequenced extends OpMode {
 
             case 5: // LIFT TO TOP
                 if (robot.lift.reachedFloor()) { // Check to see if lift reached target.
-                    // If it reached target position, set intake back to closed position and start intaking again
-                    robot.intake.setClosed();
-                    robot.intake.setIn();
-                    robot.gripper.flip(); // Flip gripper
-                    robot.lift.liftMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER); // Reset lift to run with encoder
-                    robot.lift.liftMotor.setPower(0.0); // Set lift power to 0
-                    curState = 6; // Go to next state in auto load sequence
-                } else curState = 4; // If lift stopped moving, but failed to reach target position, go back to previous state.
+                        // If it reached target position, set intake back to closed position and start intaking again
+                        robot.intake.setClosed();
+                        robot.intake.setIn();
+                        robot.gripper.flip(); // Flip gripper
+                        robot.lift.liftMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER); // Reset lift to run with encoder
+                        robot.lift.liftMotor.setPower(0.0); // Set lift power to 0
+                        curState = 6; // Go to next state in auto load sequence
+                }
                 // Allows lift to try reaching target again. Cycle can be stopped by both drivers by resetting auto-load sequence *see curState 777
                 break;
 
@@ -307,90 +305,110 @@ public class TeleOpDM18_IntakeSequenced extends OpMode {
 
             case 11: // CONTINUE TO LIFT. TRANSITION TO SCORING STATE
                 if (robot.lift.reachedFloor()) {
+                    runOnce = true;
                     curState = 101; // If lift reached target position, move on to next state
+
                 }
                 break;
 
             case 101: // GLYPHS LOADED. DRIVING TO SCORE STATE INITITATED
 
-                if (curState != lastState) robot.intake.setOpen();
+                if (runOnce) {
+                    robot.intake.setOpen();
+                    runOnce = false;
+                }
 
                 // Flip glyph
-                if (gamepad2.x && robot.lift.targetPos == robot.lift.LIFT_TOP_POS && robot.lift.reachedFloor()) curState = 102;
+                if (gamepad2.x && robot.lift.targetPos == robot.lift.LIFT_TOP_POS && robot.lift.reachedFloor()) {
+                    runOnce = true;
+                    curState = 102;
+                }
 
                     // Lift to btm floor
-                else if (gamepad2.a) {
+                if (gamepad2.a) {
                     runOnce = true;
                     curState = 110;
                 }
 
                     // Lift to mid floor
-                else if (gamepad2.b) {
+                if (gamepad2.b) {
                     runOnce = true;
                     curState = 111;
                 }
 
                     // Lift to top floor
-                else if (gamepad2.y) {
+                if (gamepad2.y) {
                     runOnce = true;
                     curState = 112;
                 }
 
                     // Extend gripper out
-                else if (gamepad2.right_trigger > 0.2) {
-                    curState = 120;
-                }
+                if (gamepad2.right_trigger > 0.2) {
+                    robot.gripper.setExtendOut();
+                    runOnce = true;
+                    curState = 130;
+                    }
 
                 break;
 
 
             case 102: // FLIP SEQUENCE
-                if (runOnce) robot.gripper.flip();
+                if (runOnce) {
+                    robot.gripper.flip();
+                    runOnce = false;
+                }
                 if (!robot.gripper.isFlipping()){
                     curState = 101;
-                    runOnce = false;
                 }
                 break;
 
             case 110: // MOVE TO BTM FLOOR
-                if (runOnce) robot.lift.setLiftBtm();
+                if (runOnce) {
+                    robot.lift.setLiftBtm();
+                    runOnce = false;
+                }
+
                 if (robot.lift.reachedFloor()) {
                     curState = 101;
-                    runOnce = false;
+
                 }
                 break;
 
             case 111: // MOVE TO MID FLOOR
-                if (runOnce) robot.lift.setLiftMid();
+                if (runOnce) {
+                    robot.lift.setLiftMid();
+                    runOnce = false;
+                }
                 if (robot.lift.reachedFloor()) {
                     curState = 101;
-                    runOnce = false;
+
                 }
                 break;
 
             case 112: // MOVE TO TOP FLOOR
-                if (runOnce) robot.lift.setLiftTop();
-                if (robot.lift.reachedFloor()) {
-                    curState = 101;
+                if (runOnce) {
+                    robot.lift.setLiftTop();
                     runOnce = false;
+
+                }
+                if (robot.lift.reachedFloor()) {
+                   curState = 101;
                 }
                 break;
 
-            case 120: // EXTEND PUSHER
-                if (!robot.intake.isClosed()) {
-                    robot.gripper.setExtendOut();
-                    curState = 130;
-                }
-                break;
 
             case 130: // PLACE GLYPH
+                if (runOnce) {
+                    robot.gripper.setExtendOut();
+                    runOnce = false;
+                }
                 // retrieve pusher
                 if (gamepad2.left_trigger > 0.2) {
                     robot.gripper.setExtendIn();
                     curState = 101;
                 }
                 // partially open grippers to drop glyphs without interfering with other stacked glyphs
-                if (gamepad2.right_bumper && !robot.gripper.isExtending()) robot.gripper.setBothPartialOpen();
+                if (gamepad2.right_bumper) robot.gripper.setBothPartialOpen();
 
                 // close grippers
                 if (gamepad2.left_bumper) robot.gripper.setBothClosed();
@@ -398,30 +416,39 @@ public class TeleOpDM18_IntakeSequenced extends OpMode {
                 // RESET intake system
                 if (gamepad2.dpad_down) {
                     robot.gripper.setBothClosed();
+                    runOnce = true;
                     curState = 777;
                 }
                 break;
 
             case 777: // RESET FOR AUTO LOAD SEQUENCE
-                if (curState != lastState) robot.gripper.setBothClosed();
+                if (runOnce) {
+                    robot.gripper.setBothOpen();
+                    // set lift position to top
+                    robot.lift.setLiftTop();
+                    runOnce = false;
+                }
 
-                if (!robot.gripper.isMoving()) {
-                    // set lift position to btm
+                if (robot.lift.reachedFloor()) {
                     robot.lift.setLiftBtm();
-                    // set gripper pusher to home position
                     robot.gripper.setExtendIn();
+                    reset = true;
 
-                } else if (!robot.gripper.isExtending() && robot.lift.reachedFloor()) {
+                }
+                if (reset) {
                     // Return to driving state
+                    runOnce = true;
                     curState = 1000;
                 }
                 break;
 
             case 1000: // RESET FLOOR POSITION AND RESET ENCODERS
-                if (curState != lastState) {
+                if (runOnce) {
                     robot.lift.resetFloorPos(); // Reset floor encoder position
-                } else if (robot.lift.resetFloorPos()){
+                    runOnce = false;
+                } else {
                     robot.lift.liftMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER); // Return lift motor to normal mode
+                    runOnce = true;
                     curState = 0; // Go to next state after floor encoder position has been reset
                 }
                 break;
@@ -434,7 +461,7 @@ public class TeleOpDM18_IntakeSequenced extends OpMode {
         lastState = curState;
 
         // Give the intake a chance to adjust speeds in cycle
-        robot.intake.updateInPower();   // Must be called each cycle for speed to vary properly
+        //robot.intake.updateInPower();   // Must be called each cycle for speed to vary properly
 
     }
     /*

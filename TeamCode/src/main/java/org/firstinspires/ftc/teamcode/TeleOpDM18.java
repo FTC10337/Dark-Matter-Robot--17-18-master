@@ -126,7 +126,7 @@ public class TeleOpDM18 extends OpMode {
         //telemetry.addData("right Pos: ", intake_right_pos);
         //telemetry.addData("top Grip Pos:", grip_top_pos);
         //telemetry.addData("btm Grip Pos:", grip_bottom_pos);
-        //telemetry.addData("Limit is: ", robot.liftLimit.getState());
+        //telemetry.addData("Limit is: ", robot.liftLimitB.getState());
         //telemetry.addData("lift Enc: ", robot.liftMotor.getCurrentPosition());
         telemetry.addData("lPower: ", robot.intake.lInPower);
         telemetry.addData("rPower: ", robot.intake.rInPower);
@@ -260,7 +260,7 @@ public class TeleOpDM18 extends OpMode {
         if (gamepad2.right_trigger < 0.2)robot.gripper.setExtendIn();
 
         /* Testing lift limit switch
-        if (gamepad2.right_stick_y > 0.2 && robot.liftLimit.getState()) {
+        if (gamepad2.right_stick_y > 0.2 && robot.liftLimitB.getState()) {
             LIFT_POWER = 1.0;
         } else if (gamepad2.right_stick_y < -0.2) {
             LIFT_POWER = -1.0;

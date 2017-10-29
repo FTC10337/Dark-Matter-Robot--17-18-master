@@ -237,8 +237,9 @@ public class Auto_Collect_Test extends LinearOpMode {
 
 
         robot.lift.resetFloorPos();
+        robot.gripper.setBothOpen();
 
-        idleWhile(robot.lift.reachedFloor());
+        while(!robot.lift.resetFloorPos()) idle();
 
         int left1Pos = robot.leftDrive1.getCurrentPosition();
         int left2Pos = robot.leftDrive2.getCurrentPosition();
@@ -281,11 +282,11 @@ public class Auto_Collect_Test extends LinearOpMode {
 
             robot.lift.setLiftTop();
 
-            idleWhile(!robot.lift.reachedFloor());
+            while(!robot.lift.reachedFloor()) idle();
 
             robot.gripper.setExtendOut();
 
-            idleWhile(robot.gripper.isExtending());
+            while(robot.gripper.isExtending()) idle();
 
             robot.gripper.setBothPartialOpen();
 
@@ -917,27 +918,29 @@ public class Auto_Collect_Test extends LinearOpMode {
 
         robot.gripper.setBtmClosed();
 
-        idleWhile(robot.gripper.btmIsMoving());
+        while(robot.gripper.btmIsMoving()) idle();
 
         robot.intake.setOpen();
 
-        idleWhile(robot.intake.isMoving());
+        while(robot.intake.isMoving()) idle();
 
         robot.lift.setLiftTop();
 
-        idleWhile(!robot.lift.reachedFloor());
+        while(!robot.lift.reachedFloor()) idle();
+
+        while(robot.lift.resetTopPos()) idle();
 
         robot.gripper.flip();
 
-        idleWhile(robot.gripper.isFlipping());
+        while(robot.gripper.isFlipping()) idle();
 
         robot.lift.setLiftBtm();
 
-        idleWhile(!robot.lift.reachedFloor());
+        while(!robot.lift.reachedFloor()) idle();
 
         robot.lift.resetFloorPos();
 
-        idleWhile(!robot.lift.reachedFloor());
+        while(!robot.lift.reachedFloor()) idle();
 
     }
 
@@ -945,22 +948,20 @@ public class Auto_Collect_Test extends LinearOpMode {
 
         robot.gripper.setBtmClosed();
 
-        idleWhile(robot.gripper.btmIsMoving());
+        while(robot.gripper.btmIsMoving()) idle();
 
         robot.intake.setOpen();
 
-        idleWhile(robot.intake.isMoving());
+        while(robot.intake.isMoving()) idle();
 
         robot.lift.setLiftTop();
 
-        idleWhile(!robot.lift.reachedFloor());
+        while(!robot.lift.reachedFloor()) idle();
+
+        while(!robot.lift.resetTopPos()) idle();
     }
 
-    public void idleWhile(boolean function){
-        while (function) {
-            idle();
-        }
-    }
+
     public boolean waitForSwitch() {
         while (!gamepad1.a) {
             idle();

@@ -3,11 +3,9 @@ package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.PIDCoefficients;
-import com.qualcomm.robotcore.util.Range;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 /**
@@ -17,7 +15,8 @@ public class Lift {
 
     // Hardware
     public DcMotor liftMotor = null;
-    public DigitalChannel liftLimit = null;
+    public DigitalChannel liftLimitB = null;
+    public DigitalChannel liftLimitT = null;
 
     public int targetPos = 0;
     boolean runToPos = false;
@@ -28,14 +27,14 @@ public class Lift {
     /* Lift constants */
     static final double     LIFT_POWER = 1.0;
     static final int        LIFT_COUNTS_PER_MOTOR_REV    = 7 ;    // Neverrest
-    static final double     LIFT_DRIVE_GEAR_REDUCTION    = 19.2;
+    static final double     LIFT_DRIVE_GEAR_REDUCTION    = 20; // Neverest 20:1
     static final double     LIFT_PULLEY_DIAMETER_INCHES   = 0.955;     // For figuring circumference
     static final double     LIFT_COUNTS_PER_INCH         = (4 * LIFT_COUNTS_PER_MOTOR_REV * LIFT_DRIVE_GEAR_REDUCTION) /
             (LIFT_PULLEY_DIAMETER_INCHES * 3.1415);
 
 
     // Lift variables
-    public int LIFT_TOP_POS = (int) (12.5*LIFT_COUNTS_PER_INCH);
+    public int LIFT_TOP_POS = (int) (12.75*LIFT_COUNTS_PER_INCH);
     public int LIFT_MID_POS = (int) (7*LIFT_COUNTS_PER_INCH);
     public int LIFT_BTM_POS = (int) (0.5*LIFT_COUNTS_PER_INCH);
 
@@ -59,10 +58,10 @@ public class Lift {
      * @param lift  Name of lift motor
      */
 
-    public void init (HardwareMap hw, String lift, String liftlimit) {
+    public void init (HardwareMap hw, String lift, String liftLimitBtm, String liftLimitTop) {
         // Define and Initialize intake Motors
         liftMotor = hw.dcMotor.get(lift);
-        liftMotor.setDirection(DcMotor.Direction.REVERSE);
+        liftMotor.setDirection(DcMotor.Direction.FORWARD);
         liftMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         // Tune the motor PID parameters
@@ -80,9 +79,12 @@ public class Lift {
         liftMotor.setPower(0.0);
 
         // Define lift limit switch
-        liftLimit = hw.get(DigitalChannel.class, liftlimit);
+        liftLimitB = hw.get(DigitalChannel.class, liftLimitBtm);
+        liftLimitT = hw.get(DigitalChannel.class, liftLimitTop);
+
         // set the digital channel to input.
-        liftLimit.setMode(DigitalChannel.Mode.INPUT);
+        liftLimitB.setMode(DigitalChannel.Mode.INPUT);
+        liftLimitT.setMode(DigitalChannel.Mode.INPUT);
 
     }
 
@@ -130,13 +132,27 @@ public class Lift {
 
     // Resets lift encoder to 0 using lift limit switch
     public boolean resetFloorPos() {
-        liftMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        if (!liftLimit.getState()) {
-            liftMotor.setPower(-0.15);
+        if (liftLimitB.getState()) {
+            liftMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+            liftMotor.setPower(-0.25);
             return false;
         } else {
             liftMotor.setPower(0.0);
             liftMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+            liftTimer.reset();
+            return true;
+        }
+    }
+
+    // Resets lift encoder to TOP pos using lift limit switch
+    public boolean resetTopPos() {
+        if (liftLimitT.getState()) {
+            liftMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+            liftMotor.setPower(0.50);
+            return false;
+        } else {
+            liftMotor.setPower(0.0);
+            //liftMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
             liftTimer.reset();
             return true;
         }

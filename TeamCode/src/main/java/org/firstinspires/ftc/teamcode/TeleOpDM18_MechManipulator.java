@@ -64,6 +64,8 @@ public class TeleOpDM18_MechManipulator extends OpMode {
 
     boolean intake = false;
     boolean resetLift = false;
+    boolean resetLiftTop = false;
+    boolean autoLift = false;
     boolean plusCurState = false;
     boolean minusCurState = false;
     boolean isButtonPressed = false;
@@ -111,48 +113,18 @@ public class TeleOpDM18_MechManipulator extends OpMode {
 
         telemetry.update();
 
-        double left;
-        double right;
-
-        double throttle = -gamepad1.left_stick_y;
-        double direction = gamepad1.right_stick_x;
-
-        // Smooth and deadzone the joytick values
-        throttle = smoothPowerCurve(deadzone(throttle, 0.10));
-        direction = (smoothPowerCurve(deadzone(direction, 0.10))) / 2;
-
-        // Calculate the drive motors for left and right
-        right = throttle - direction;
-        left = throttle + direction;
-
-        // clip the right/left values so that the values never exceed +/- 1
-        right = Range.clip(right, -1, 1);
-        left = Range.clip(left, -1, 1);
-        // Normalize speeds if any one exceeds +/- 1.0;
-        double max = Math.max(Math.abs(right), Math.abs(left));
-        if (max > 1.0) {
-            left /= max;
-            right /= max;
-        }
-
-        robot.leftDrive1.setPower(left);
-        robot.leftDrive2.setPower(left);
-        robot.rightDrive1.setPower(right);
-        robot.rightDrive2.setPower(right);
-
 
         // Ability to change states. Each state gives controls to different robot mechanisms
         if (gamepad2.dpad_right && !isButtonPressed) {
             curState += 1;
-            Range.clip(curState, 0, 11);
             isButtonPressed = true;
             telemetry.clearAll();
         } else if (gamepad2.dpad_left && !isButtonPressed) {
             curState -= 1;
-            Range.clip(curState, 0, 11);
             isButtonPressed = true;
             telemetry.clearAll();
         }
+        curState%=13;   // Wrap around
 
         if (!gamepad2.dpad_left && !gamepad2.dpad_right && isButtonPressed)isButtonPressed = false;
 
@@ -161,10 +133,10 @@ public class TeleOpDM18_MechManipulator extends OpMode {
 
         switch (curState) {
             case 0: // GRIPPER BOTTOM
-                telemetry.addData("GRIPPER", "BOTTOM");
-                telemetry.addData("Pos: ", robot.gripper.btmGrip.getPosition());
+                telemetry.addData("GRIPPER", "PURPLE");
+                telemetry.addData("Pos: ", robot.gripper.purpleGrip.getPosition());
 
-                Pos = robot.gripper.getBtmServoPos();
+                Pos = robot.gripper.purpleGrip.getPosition();
 
                 if (gamepad2.x) {
                     Pos += 0.001;
@@ -173,14 +145,14 @@ public class TeleOpDM18_MechManipulator extends OpMode {
                 }
 
                 Range.clip(Pos, 0, 1);
-                robot.gripper.setBtmServoPos(Pos);
+                robot.gripper.purpleGrip.setPosition(Pos);
                 break;
 
             case 1: // GRIPPER TOP
-                telemetry.addData("GRIPPER", "TOP");
-                telemetry.addData("Pos: ", robot.gripper.topGrip.getPosition());
+                telemetry.addData("GRIPPER", "BLACK");
+                telemetry.addData("Pos: ", robot.gripper.blackGrip.getPosition());
 
-                Pos = robot.gripper.getTopServoPos();
+                Pos = robot.gripper.blackGrip.getPosition();
 
                 if (gamepad2.x) {
                     Pos += 0.001;
@@ -189,7 +161,7 @@ public class TeleOpDM18_MechManipulator extends OpMode {
                 }
 
                 Range.clip(Pos, 0, 1);
-                robot.gripper.setTopServoPos(Pos);
+                robot.gripper.blackGrip.setPosition(Pos);
                 break;
 
             case 2: // GRIPPER FLIP
@@ -262,8 +234,9 @@ public class TeleOpDM18_MechManipulator extends OpMode {
                 break;
 
             case 6: // LIFT LIMIT SWITCH
-                telemetry.addData("LIFT", "LIMIT");
-                telemetry.addData("Pos: ", robot.lift.liftLimit.getState());
+                telemetry.addData("LIFT", "LIMITS");
+                telemetry.addData("Pos B: ", robot.lift.liftLimitB.getState());
+                telemetry.addData( "Pos T: ", robot.lift.liftLimitT.getState());
                 break;
 
             case 7: // JEWEL ROTATE
@@ -321,22 +294,41 @@ public class TeleOpDM18_MechManipulator extends OpMode {
                     liftPower = smoothPowerCurve(deadzone(liftPower, 0.10));
                     Range.clip(liftPower, -1, 1);
                     robot.lift.liftMotor.setPower(liftPower);
-                } else robot.lift.liftMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                    autoLift = false;
+                } else if (!autoLift) {
+                    robot.lift.stopLift();
+                }
 
                 if (gamepad2.y) {
                     robot.lift.setLiftTop();
+                    autoLift = true;
                 }
                 if (gamepad2.a) {
                     robot.lift.setLiftBtm();
+                    autoLift = true;
                 }
+
                 if (gamepad2.right_bumper) {
                     resetLift = true;
+                    autoLift = true;
                 }
 
                 if (resetLift) {
-                    robot.lift.resetFloorPos();
                     if (robot.lift.resetFloorPos()){
                         resetLift = false;
+                        autoLift = false;
+                    }
+                }
+
+                if (gamepad2.left_bumper) {
+                    resetLiftTop = true;
+                    autoLift = true;
+                }
+
+                if (resetLiftTop) {
+                    if (robot.lift.resetTopPos()) {
+                        resetLiftTop = false;
+                        autoLift = false;
                     }
                 }
                 break;
@@ -346,6 +338,44 @@ public class TeleOpDM18_MechManipulator extends OpMode {
                 telemetry.addData("rPower", robot.intake.rInPower);
                 telemetry.addData("Cycle: ", robot.intake.intakeCycle);
                 intakeControl();
+                break;
+
+            case 12: // DRIVE TRAIN
+
+                telemetry.addData("ldrive1: ", robot.leftDrive1.getCurrentPosition());
+                telemetry.addData("ldrive2: ", robot.leftDrive2.getCurrentPosition());
+                telemetry.addData("rdrive1: ", robot.rightDrive1.getCurrentPosition());
+                telemetry.addData("rdrive2: ", robot.rightDrive2.getCurrentPosition());
+
+                double left;
+                double right;
+
+                double throttle = -gamepad2.left_stick_y;
+                double direction = gamepad2.right_stick_x;
+
+                // Smooth and deadzone the joytick values
+                throttle = smoothPowerCurve(deadzone(throttle, 0.10));
+                direction = (smoothPowerCurve(deadzone(direction, 0.10))) / 2;
+
+                // Calculate the drive motors for left and right
+                right = throttle - direction;
+                left = throttle + direction;
+
+                // clip the right/left values so that the values never exceed +/- 1
+                right = Range.clip(right, -1, 1);
+                left = Range.clip(left, -1, 1);
+                // Normalize speeds if any one exceeds +/- 1.0;
+                double max = Math.max(Math.abs(right), Math.abs(left));
+                if (max > 1.0) {
+                    left /= max;
+                    right /= max;
+                }
+
+                robot.leftDrive1.setPower(left);
+                robot.leftDrive2.setPower(left);
+                robot.rightDrive1.setPower(right);
+                robot.rightDrive2.setPower(right);
+
                 break;
 
             default:

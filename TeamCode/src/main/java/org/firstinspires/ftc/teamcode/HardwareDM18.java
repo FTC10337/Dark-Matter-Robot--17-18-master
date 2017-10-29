@@ -75,7 +75,7 @@ public class HardwareDM18
 
     BNO055IMU adaGyro;
 
-    public final static double JEWEL_HOME = 0.11;
+    public final static double JEWEL_HOME = 0.027;
     public final static double JEWEL_DEPLOY = 0.76;
     public final static double JEWEL_ROT_HOME = 0.52;
     public final static double JEWEL_ROT_FWD = 0.62;
@@ -135,11 +135,15 @@ public class HardwareDM18
 
         if (initGripper){
             // Setup gripper mapped to hardware
-            gripper.init(hwMap, "gripTop", "gripBottom", "gripRotate", "gripExtend");
+            gripper.init(hwMap, "gripP", "gripB", "gripRotate", "gripExtend");
+            // Set gripper not flipped and closed
+            gripper.setFlipped(false);
+            gripper.setBothClosed();
+
         }
 
         // Setup lift mapped to hardware
-        lift.init(hwMap, "lift", "liftlimit");
+        lift.init(hwMap, "lift", "llb", "llt");
 
         // Set all motors to zero power
         leftDrive1.setPower(0);
@@ -164,9 +168,6 @@ public class HardwareDM18
         jewelServo.setPosition(JEWEL_HOME);
         jewelRotServo.setPosition(JEWEL_ROT_HOME);
 
-        // Set gripper not flipped and closed
-        gripper.setFlipped(false);
-        gripper.setBothClosed();
 
         // Set intake to closed and stopped
         intake.setClosed();

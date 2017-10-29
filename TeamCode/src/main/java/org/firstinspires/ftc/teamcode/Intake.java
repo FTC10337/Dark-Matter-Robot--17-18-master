@@ -28,11 +28,11 @@ public class Intake {
     public DistanceSensor distanceSensor = null;
 
     // Intake constants
-    final static double INTAKE_LEFT_HOME = 1.0;
-    final static double INTAKE_LEFT_RELEASE = 0.6;
-    final static double INTAKE_RIGHT_HOME = 0.0;
+    final static double INTAKE_LEFT_HOME = 0.7;
+    final static double INTAKE_LEFT_RELEASE = 0.38;
+    final static double INTAKE_RIGHT_HOME = 0.2;
     final static double INTAKE_RIGHT_RELEASE = 0.35;
-    final static double INTAKE_MOVE_TIME = 500;      // 0.5 seconds to open or close intake
+    final static double INTAKE_MOVE_TIME = 500;     // 0.5 seconds to open or close intake
     final static double MAX_IN_POWER = 1.0;
     final static double MIN_IN_POWER = 0.6;
     final static double IN_POWER_DELTA = 0.005;      // Amount to increment/decrement power per cycle
@@ -46,7 +46,7 @@ public class Intake {
     // Place to track desired left/right motor power as we cycle them
     double rInPower = 0.0;
     double lInPower = 0.0;
-    double intakeDistance = 9.0;
+    double intakeDistance = 9.5;
 
     // Timer to tell if intake is still opening/closing
     ElapsedTime timer = new ElapsedTime();
