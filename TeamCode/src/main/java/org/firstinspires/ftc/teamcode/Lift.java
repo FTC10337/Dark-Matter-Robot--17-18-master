@@ -196,15 +196,6 @@ public class Lift {
         }
     }
 
-    public boolean isMoving() {
-        if (liftMotor.isBusy() && liftTimer.milliseconds() < LIFT_TIME) {
-            return false;
-        } else {
-            stopLift();         // Reached end or expired so force stop motor for safety
-            return true;
-        }
-    }
-
     public double distFromBottom() {
         double trueBottom = LIFT_BTM_POS - liftOffset;      // Current encoder reading of bottom of travel
         return ((liftMotor.getCurrentPosition() - trueBottom) / LIFT_COUNTS_PER_INCH);  // Inches above bottom
@@ -219,10 +210,6 @@ public class Lift {
             return true;
         }
         return false;
-    }
-
-    public boolean canFlipDistance() {
-        return (Math.abs(liftMotor.getCurrentPosition() - liftMotor.getTargetPosition()) < 4.0 * LIFT_COUNTS_PER_INCH);
     }
 
 }

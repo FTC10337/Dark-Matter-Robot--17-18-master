@@ -58,7 +58,7 @@ public class TeleOpDM18_Janus extends OpMode {
     // could also use HardwarePushbotMatrix class.
 
 
-    public enum States {INIT_1, INIT_2, INIT_3, RESET_1, RESET_2, RESET_3, RESET_4, AUTO_LOAD_INIT, AUTO_LOAD_1, AUTO_LOAD_2, AUTO_LOAD_3, AUTO_LOAD_4, AUTO_LOAD_5}
+    public enum States {INIT_1, INIT_2, INIT_3, RESET_1, RESET_2, RESET_3, RESET_4, AUTO_LOAD_INIT, AUTO_LOAD_1, AUTO_LOAD_1_2, AUTO_LOAD_2, AUTO_LOAD_3, AUTO_LOAD_4, AUTO_LOAD_5, AUTO_LOAD_SECOND}
 
     States nStates = States.INIT_1;
 
@@ -232,7 +232,12 @@ public class TeleOpDM18_Janus extends OpMode {
             robot.lift.liftMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
             double liftPower = -gamepad2.right_stick_y;
             liftPower = smoothPowerCurve(deadzone(liftPower, 0.20));
-            Range.clip(liftPower, -1, 1);
+            if (!robot.lift.liftLimitT.getState()) {
+                liftPower = Range.clip(liftPower, -1, 0);
+            } else if (!robot.lift.liftLimitB.getState()){
+                liftPower = Range.clip(liftPower, 0, 1);
+            } else liftPower = Range.clip(liftPower, -1, 1);
+
             robot.lift.liftMotor.setPower(liftPower);
 
         } else if (!autoMove && !init_TeleOp) {
@@ -322,7 +327,7 @@ public class TeleOpDM18_Janus extends OpMode {
         if (gamepad2.left_stick_y > 0.2 && !init_TeleOp || gamepad2.left_stick_y < -0.2 && !init_TeleOp) {
             if ((robot.lift.distFromBottom() > 8) ||
                     (!robot.intake.isClosed() && !robot.intake.isMoving() &&
-                    !robot.gripper.isBtmOpen() && !robot.gripper.isMoving())) {
+                            !robot.gripper.isBtmOpen() && !robot.gripper.isMoving())) {
                 double speed = smoothPowerCurve(deadzone(-gamepad2.left_stick_y, 0.2));
                 speed = Range.clip(speed, -1, 1);
                 robot.gripper.moveInOut(speed);
@@ -359,9 +364,11 @@ public class TeleOpDM18_Janus extends OpMode {
             if (robot.gripper.isPusherOut()) {
                 // Set to partial open since we are extended
                 robot.gripper.setTopPartialOpen();
+                isButtonPressed = true;
             } else {
                 // Set fully open since we are all the way in
                 robot.gripper.setTopOpen();
+                isButtonPressed = true;
             }
         }
 
@@ -428,10 +435,11 @@ public class TeleOpDM18_Janus extends OpMode {
             isButtonPressed = true;
             nStates = States.AUTO_LOAD_INIT;
             init_AutoLoad = true;
+            autoMove = true;
             init_Reset = false;
         }
 
-        if (init_AutoLoad) {
+        if (init_AutoLoad && autoMove) {
 
             switch (nStates) {
 
@@ -441,7 +449,7 @@ public class TeleOpDM18_Janus extends OpMode {
                     } else if (!robot.gripper.btmIsMoving()){
                         robot.lift.setLiftBtm();
                     }
-                    if (!robot.gripper.isBtmClosed() && robot.lift.targetPos == robot.lift.LIFT_BTM_POS && robot.lift.reachedFloor()){
+                    if (!robot.gripper.isBtmClosed()&& robot.lift.targetPos == robot.lift.LIFT_BTM_POS && robot.lift.reachedFloor()){
                         // Move lift down to BTM limit switch
                         if (robot.lift.resetFloorPos()) {
                             nStates = States.AUTO_LOAD_1;
@@ -451,14 +459,26 @@ public class TeleOpDM18_Janus extends OpMode {
 
                 case AUTO_LOAD_1: // GRAB GLYPH & OPEN INTAKE WHEELS
                     // Grab glyph with BTM gripper
-                    robot.gripper.setBtmClosed();
-                    // Open intake after gripper has closed
-                    if (!robot.gripper.btmIsMoving()) {
-                        robot.intake.setOpen();
-                        nStates = States.AUTO_LOAD_2;
+                    if(!robot.gripper.isBtmClosed()) {
+                        robot.gripper.setBtmClosed();
+                        nStates = States.AUTO_LOAD_1_2;
                     }
                     break;
 
+                case AUTO_LOAD_1_2:
+                    // Open intake after gripper has closed
+                    telemetry.addData("Top is closed:", robot.gripper.isTopClosed());
+                    if (!robot.gripper.btmIsMoving()) {
+                        robot.intake.setOpen();
+                        if (!robot.gripper.isTopClosed()) {
+                            nStates = States.AUTO_LOAD_2;
+                        } else {
+                            nStates = States.AUTO_LOAD_SECOND;
+                        }
+                    }
+                    break;
+
+                // LOAD SEQUENCE FOR FIRST GLYPH - Determined if top gripper is OPEN, therefore does not have glyph.
                 case AUTO_LOAD_2: // LIFT TO TOP
                     // Set lift position to move to top after intake has opened
                     if (!robot.intake.isMoving()) {
@@ -468,7 +488,7 @@ public class TeleOpDM18_Janus extends OpMode {
                     break;
 
                 case AUTO_LOAD_3: // FLIP AFTER TOP REACHED
-                    if (robot.lift.canFlipDistance()) { // Check to see if lift reached target.
+                    if (robot.lift.distFromBottom() > 9.0) { // Check to see if lift reached height to flip
                         // If it reached target position, set intake back to closed position and start intaking again
                         robot.intake.setClosed();
                         robot.intake.setIn();
@@ -493,6 +513,13 @@ public class TeleOpDM18_Janus extends OpMode {
                     }
                     break;
 
+                // LOAD SEQUENCE FOR SECOND GLYPH - Determined if top gripper is CLOSED, therefore assumed it has a glyph.
+                case AUTO_LOAD_SECOND: // LIFT TO DRIVE
+                    if (!robot.intake.isMoving()) {
+                        robot.lift.setLiftHeight(2.0);
+                        init_AutoLoad = false;
+                    }
+                    break;
             }
         }
 

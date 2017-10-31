@@ -46,7 +46,7 @@ public class Intake {
     // Place to track desired left/right motor power as we cycle them
     double rInPower = 0.0;
     double lInPower = 0.0;
-    double intakeDistance = 9.5;
+    double intakeDistance = 7.5;
 
     // Timer to tell if intake is still opening/closing
     ElapsedTime timer = new ElapsedTime();
