@@ -29,9 +29,9 @@ public class Intake {
 
     // Intake constants
     final static double INTAKE_LEFT_HOME = 0.7;
-    final static double INTAKE_LEFT_RELEASE = 0.38;
+    final static double INTAKE_LEFT_RELEASE = 0.27;
     final static double INTAKE_RIGHT_HOME = 0.2;
-    final static double INTAKE_RIGHT_RELEASE = 0.35;
+    final static double INTAKE_RIGHT_RELEASE = 0.44;
     final static double INTAKE_MOVE_TIME = 500;     // 0.5 seconds to open or close intake
     final static double MAX_IN_POWER = 1.0;
     final static double MIN_IN_POWER = 0.6;
@@ -244,7 +244,7 @@ public class Intake {
         intakeRightServo.setPosition(pos);
     }
 
-    public boolean detechGlyph() {
+    public boolean detectGlyph() {
         if (distanceSensor.getDistance(DistanceUnit.CM) < intakeDistance) return true; else return false;
     }
 }

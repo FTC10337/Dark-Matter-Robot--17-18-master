@@ -31,7 +31,6 @@ package org.firstinspires.ftc.teamcode;
 
 import android.graphics.Color;
 
-import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.util.ElapsedTime;
@@ -43,9 +42,7 @@ import org.firstinspires.ftc.robotcore.external.ClassFactory;
 import org.firstinspires.ftc.robotcore.external.matrices.OpenGLMatrix;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
-import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
-import org.firstinspires.ftc.robotcore.external.navigation.RelicRecoveryVuMark;
 import org.firstinspires.ftc.robotcore.external.navigation.VuMarkInstanceId;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackable;
@@ -250,7 +247,7 @@ public class Auto_Collect_Test extends LinearOpMode {
         collectGlyph(0.25, 5, true, 0);
 
         // Determine if glyph is in intake. If so, auto load first glyph and take account for it.
-        if (robot.intake.detechGlyph()) {
+        if (robot.intake.detectGlyph()) {
             autoLoadFirstGlyph();
             glyphsCollected += 1;
         }
@@ -259,9 +256,9 @@ public class Auto_Collect_Test extends LinearOpMode {
         collectGlyph(0.25, 2,true, 0);
 
         // Determine if glyph is in intake. If so, auto load glyph as first or second depending on whether one was previously loaded or not.
-        if (robot.intake.detechGlyph() && glyphsCollected == 1) {
+        if (robot.intake.detectGlyph() && glyphsCollected == 1) {
             autoLoadSecondGlyph();
-        } else if (robot.intake.detechGlyph() && glyphsCollected == 0) {
+        } else if (robot.intake.detectGlyph() && glyphsCollected == 0) {
             autoLoadFirstGlyph();
         }
 
@@ -727,7 +724,7 @@ public class Auto_Collect_Test extends LinearOpMode {
 
         while (opModeIsActive() && (runtime.seconds() < timeout) && !stop) {
 
-            if (robot.intake.detechGlyph()) {
+            if (robot.intake.detectGlyph()) {
                 stop = true;
             }
 

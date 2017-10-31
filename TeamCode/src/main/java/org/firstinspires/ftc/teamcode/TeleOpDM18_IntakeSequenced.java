@@ -69,8 +69,6 @@ public class TeleOpDM18_IntakeSequenced extends OpMode {
     int curState = -3;
     int lastState = 0;
 
-    double intakeDistance = 9.0;
-
     /*
      * Code to run ONCE when the driver hits INIT
      */
@@ -112,7 +110,7 @@ public class TeleOpDM18_IntakeSequenced extends OpMode {
 
 
         telemetry.addData("curState: ", curState);
-        telemetry.addData("glyph? ", robot.intake.detechGlyph());
+        telemetry.addData("glyph? ", robot.intake.detectGlyph());
         telemetry.addData("dist: ", robot.intake.distanceSensor.getDistance(DistanceUnit.CM));
         telemetry.addData("flipTimer: ", robot.gripper.flipTimer);
         telemetry.update();
@@ -196,7 +194,7 @@ public class TeleOpDM18_IntakeSequenced extends OpMode {
 
             case 1: // ATTEMPTING TO INTAKE GLYPH
                 // If glyph is detected, stop intake and move on to next state
-                if (robot.intake.detechGlyph()) {
+                if (robot.intake.detectGlyph()) {
                     robot.intake.setStop();
                     curState = 2;
                 } else if (gamepad1.left_trigger > 0.2) {
@@ -216,12 +214,12 @@ public class TeleOpDM18_IntakeSequenced extends OpMode {
                 }
                 // Initiate grab of glyph and move on to next state if driver_2 confirms.
                 // ***AUTO SEQUENCE BEGINS AFTER THIS DRIVER CONFIRMATION***
-                if (gamepad2.a && robot.intake.detechGlyph()) {
+                if (gamepad2.a && robot.intake.detectGlyph()) {
                     robot.gripper.setBtmClosed();
                     curState = 3;
                 }
                 // If for some reason, glyph is not seen, go back to start of process.
-                if (!robot.intake.detechGlyph()) curState = 0;
+                if (!robot.intake.detectGlyph()) curState = 0;
                 break;
 
             case 3: // OPEN INTAKE WHEELS
@@ -267,10 +265,10 @@ public class TeleOpDM18_IntakeSequenced extends OpMode {
                     robot.lift.resetFloorPos();
                 }
 
-                if (robot.intake.detechGlyph()) {
+                if (robot.intake.detectGlyph()) {
                     robot.intake.setStop(); // Stop intake after glyph has been detected
                 }
-                if (robot.intake.detechGlyph() && robot.lift.resetFloorPos()) {
+                if (robot.intake.detectGlyph() && robot.lift.resetFloorPos()) {
                     curState = 8; // Move to next state when glyph has been detected in intake and btm floor encoder pos has been reset to 0
                 }
 
@@ -279,10 +277,10 @@ public class TeleOpDM18_IntakeSequenced extends OpMode {
                 if (gamepad1.right_trigger > 0.2) robot.intake.setIn(); // set intake in
                 else if (gamepad1.left_trigger > 0.2) robot.intake.setOut();// set intake out
                 else if (gamepad1.a) robot.intake.setStop(); // set intake stop
-                else if (robot.intake.detechGlyph()) robot.intake.setStop(); // set intake stop if glyph detected
+                else if (robot.intake.detectGlyph()) robot.intake.setStop(); // set intake stop if glyph detected
 
                 // Move to next state if driver2 initiates glyph grab
-                if (gamepad2.a && !robot.intake.isIntakeInOn && !robot.intake.isIntakeOutOn && robot.intake.detechGlyph())
+                if (gamepad2.a && !robot.intake.isIntakeInOn && !robot.intake.isIntakeOutOn && robot.intake.detectGlyph())
                 {
                     robot.gripper.setBtmClosed(); // Grab glyph
                     curState = 9;
@@ -541,7 +539,7 @@ public class TeleOpDM18_IntakeSequenced extends OpMode {
         }
 
         // Intake STOP
-        if (intake && robot.intake.detechGlyph()) {
+        if (intake && robot.intake.detectGlyph()) {
             robot.intake.setStop();
             intake = false;
         }

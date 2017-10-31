@@ -134,7 +134,15 @@ public class Gripper {
      * Open both grippers partially to score without interferring with other stacked glyphs
      */
     public void setBothPartialOpen() {
+        setBtmPartialOpen();
+        setTopPartialOpen();
+    }
+
+    public void setBtmPartialOpen() {
         btmGrip.setPosition(GRIP_PARTIAL_OPEN);
+    }
+
+    public void setTopPartialOpen() {
         topGrip.setPosition(GRIP_PARTIAL_OPEN);
     }
 
@@ -144,6 +152,15 @@ public class Gripper {
     public void setExtendOut() {
 
         extendGrip.setPosition(GRIP_EXTEND_OUT);
+        extendTimer.reset();
+    }
+
+    public void moveInOut(double speed) {
+        speed = Range.clip(speed, -1, 1);
+        double current = extendGrip.getPosition();
+        double target =  current + (GRIP_EXTEND_OUT - GRIP_EXTEND_HOME) * speed / 20;   // At full stick will take 20 cycles
+        target = Range.clip(target, GRIP_EXTEND_HOME, GRIP_EXTEND_OUT);
+        extendGrip.setPosition(target);
         extendTimer.reset();
     }
 
@@ -217,6 +234,10 @@ public class Gripper {
         return (blackGrip.getPosition() == GRIP_CLOSED);
     }
 
+    public boolean isBtmOpen() { return (btmGrip.getPosition() == GRIP_OPEN); }
+
+    public boolean isPusherOut() { return (Math.abs(extendGrip.getPosition() - GRIP_EXTEND_HOME) > 0.01); }
+
     public void flip() {
         if (isGripFlipped) {
             // Was flipped so turn it back upright
@@ -244,9 +265,7 @@ public class Gripper {
         flipTimer.reset();          // Start a flipTimer so we can check later if it might be moving
     }
 
-    public boolean isFlipping() {
-        return (flipTimer.milliseconds() < FLIP_TIME);
-    }
+    public boolean isFlipping() { return (flipTimer.milliseconds() < FLIP_TIME); }
 
     public boolean topIsMoving() {
         return (topTimer.milliseconds() < GRIP_TIME);

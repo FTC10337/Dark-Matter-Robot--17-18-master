@@ -1,4 +1,5 @@
 
+
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -7,6 +8,7 @@ import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.PIDCoefficients;
 import com.qualcomm.robotcore.util.ElapsedTime;
+import com.qualcomm.robotcore.util.Range;
 
 /**
  *    Everything related to the lift motor
@@ -19,7 +21,8 @@ public class Lift {
     public DigitalChannel liftLimitT = null;
 
     public int targetPos = 0;
-    boolean runToPos = false;
+    boolean runUp = false;
+    boolean runDown = false;
 
     public int LIFT_TIME = 3000;
     ElapsedTime liftTimer = new ElapsedTime();
@@ -34,11 +37,13 @@ public class Lift {
 
 
     // Lift variables
-    public int LIFT_TOP_POS = (int) (12.75*LIFT_COUNTS_PER_INCH);
-    public int LIFT_MID_POS = (int) (7*LIFT_COUNTS_PER_INCH);
-    public int LIFT_BTM_POS = (int) (0.5*LIFT_COUNTS_PER_INCH);
+    public final int LIFT_TOP_POS = (int) (12.75*LIFT_COUNTS_PER_INCH);
+    public final int LIFT_MID_POS = (int) (7*LIFT_COUNTS_PER_INCH);
+    public final int LIFT_BTM_POS = (int) (0.5*LIFT_COUNTS_PER_INCH);
 
-
+    public final int LIFT_TOP_OFFSET = 2300;       // Encoder reading when we hit top limit switch
+    public final int LIFT_BTM_OFFSET = 0;
+    public int liftOffset = LIFT_BTM_OFFSET;                     // Normal position is we start at bottom
 
     // Timer to tell if intake is still opening/closing
     ElapsedTime timer = new ElapsedTime();
@@ -90,44 +95,75 @@ public class Lift {
 
     // Set lift position to top
     public void setLiftTop() {
-        targetPos = LIFT_TOP_POS;
+        targetPos = LIFT_TOP_POS - liftOffset;
         liftMotor.setTargetPosition(targetPos);
         liftMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         liftMotor.setPower(LIFT_POWER);
-        runToPos = true;
+        runUp = true;
         liftTimer.reset();
     }
 
     // Set lift position to middle
     public void setLiftMid() {
-        targetPos = LIFT_MID_POS;
+        targetPos = LIFT_MID_POS - liftOffset;
         liftMotor.setTargetPosition(targetPos);
+
+        if (liftMotor.getCurrentPosition() < targetPos) {
+            runUp = true;
+        } else {
+            runDown = true;
+        }
+
         liftMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        liftMotor.setPower(LIFT_POWER);
-        runToPos = true;
+        double thePower = LIFT_POWER;
+        if (targetPos < liftMotor.getCurrentPosition()){
+            thePower /= 2;              // Moving down so use less power
+        }
+        liftMotor.setPower(thePower);
         liftTimer.reset();
     }
 
     // Set lift position to bottom
     public void setLiftBtm() {
-        targetPos = LIFT_BTM_POS;
+        targetPos = LIFT_BTM_POS - liftOffset;
         liftMotor.setTargetPosition(targetPos);
         liftMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        liftMotor.setPower(LIFT_POWER);
-        runToPos = true;
+        double thePower = LIFT_POWER;
+        if (targetPos < liftMotor.getCurrentPosition()){
+            thePower /= 2;              // Moving down so use less power
+        }
+        liftMotor.setPower(LIFT_POWER/2);
+        runDown = true;
+        liftTimer.reset();
+    }
+
+    public void setLiftHeight(double height) {
+        height = Range.clip(height, 1.0, 11.0);
+        targetPos = LIFT_BTM_POS - liftOffset + (int)(height * LIFT_COUNTS_PER_INCH);
+
+        liftMotor.setTargetPosition(targetPos);
+
+        if (liftMotor.getCurrentPosition() < targetPos) {
+            runUp = true;
+        } else {
+            runDown = true;
+        }
+
+        liftMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        double thePower = LIFT_POWER;
+        if (targetPos < liftMotor.getCurrentPosition()){
+            thePower /= 2;              // Moving down so use less power
+        }
+        liftMotor.setPower(thePower);
         liftTimer.reset();
     }
 
     // Hard Stop Lift
     public void stopLift() {
+        runDown = false;
+        runUp = false;
         liftMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         liftMotor.setPower(0.0);
-    }
-
-
-    // Move lift to updated lift position then stop
-    public void updateLiftMotor() {
-
     }
 
     // Resets lift encoder to 0 using lift limit switch
@@ -139,6 +175,7 @@ public class Lift {
         } else {
             liftMotor.setPower(0.0);
             liftMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+            liftOffset = LIFT_BTM_OFFSET;
             liftTimer.reset();
             return true;
         }
@@ -148,20 +185,15 @@ public class Lift {
     public boolean resetTopPos() {
         if (liftLimitT.getState()) {
             liftMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-            liftMotor.setPower(0.50);
+            liftMotor.setPower(0.75);
             return false;
         } else {
             liftMotor.setPower(0.0);
-            //liftMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+            liftMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+            liftOffset = LIFT_TOP_OFFSET;
             liftTimer.reset();
             return true;
         }
-    }
-
-    public boolean isResetComplete() {
-        if (liftMotor.getMode() == DcMotor.RunMode.STOP_AND_RESET_ENCODER && liftTimer.milliseconds() > 1000) {
-            return true;
-        } else return false;
     }
 
     public boolean isMoving() {
@@ -173,8 +205,24 @@ public class Lift {
         }
     }
 
+    public double distFromBottom() {
+        double trueBottom = LIFT_BTM_POS - liftOffset;      // Current encoder reading of bottom of travel
+        return ((liftMotor.getCurrentPosition() - trueBottom) / LIFT_COUNTS_PER_INCH);  // Inches above bottom
+    }
+
     public boolean reachedFloor() {
-        return (Math.abs(liftMotor.getCurrentPosition() - targetPos) < 0.5 * LIFT_COUNTS_PER_INCH);
+        if ((runUp && !liftLimitT.getState()) ||
+                (runDown && !liftLimitB.getState()) ||
+                !liftMotor.isBusy() ||
+                (Math.abs(liftMotor.getCurrentPosition()-liftMotor.getTargetPosition()) < 0.5*LIFT_COUNTS_PER_INCH)){
+            stopLift();
+            return true;
+        }
+        return false;
+    }
+
+    public boolean canFlipDistance() {
+        return (Math.abs(liftMotor.getCurrentPosition() - liftMotor.getTargetPosition()) < 4.0 * LIFT_COUNTS_PER_INCH);
     }
 
 }

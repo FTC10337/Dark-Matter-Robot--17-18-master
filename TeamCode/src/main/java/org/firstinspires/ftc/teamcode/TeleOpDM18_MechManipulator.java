@@ -466,7 +466,7 @@ public class TeleOpDM18_MechManipulator extends OpMode {
         }
 
         // Intake STOP
-        if (intake && robot.intake.detechGlyph()) {
+        if (intake && robot.intake.detectGlyph()) {
             robot.intake.setStop();
             intake = false;
         }
