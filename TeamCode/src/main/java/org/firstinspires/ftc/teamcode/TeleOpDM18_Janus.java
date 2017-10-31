@@ -58,7 +58,7 @@ public class TeleOpDM18_Janus extends OpMode {
     // could also use HardwarePushbotMatrix class.
 
 
-    public enum States {INIT_1, INIT_2, INIT_3, RESET_1, RESET_2, RESET_3, RESET_4, AUTO_LOAD_INIT, AUTO_LOAD_1, AUTO_LOAD_1_2, AUTO_LOAD_2, AUTO_LOAD_3, AUTO_LOAD_4, AUTO_LOAD_5, AUTO_LOAD_SECOND}
+    public enum States {INIT_1, INIT_2, INIT_3, RESET_1, RESET_2, RESET_2_1,  RESET_3, RESET_4, AUTO_LOAD_INIT, AUTO_LOAD_1, AUTO_LOAD_1_2, AUTO_LOAD_2, AUTO_LOAD_3, AUTO_LOAD_4, AUTO_LOAD_5, AUTO_LOAD_SECOND}
 
     States nStates = States.INIT_1;
 
@@ -72,13 +72,18 @@ public class TeleOpDM18_Janus extends OpMode {
     boolean resetLiftTop = false;
     boolean liftChangePos = false;
 
+    boolean topGripisClosed = false;
+
     boolean isButtonPressed = false;
 
     boolean flip = false;
 
     boolean glyphDetected = false;
 
+    int turnCoefficient = 1;
+
     int liftFloorTarget = 0;
+
 
 
     /*
@@ -172,9 +177,16 @@ public class TeleOpDM18_Janus extends OpMode {
         double throttle = -gamepad1.left_stick_y;
         double direction = gamepad1.right_stick_x;
 
+
         // Smooth and deadzone the joytick values
         throttle = smoothPowerCurve(deadzone(throttle, 0.10));
-        direction = (smoothPowerCurve(deadzone(direction, 0.10))) / 2;
+
+        // Change turn speed if trying to place glyph
+        if (!init_TeleOp && robot.gripper.isPusherOut()) {
+            turnCoefficient = 4;
+        } else turnCoefficient = 2;
+
+        direction = (smoothPowerCurve(deadzone(direction, 0.10))) / turnCoefficient;
 
         // Calculate the drive motors for left and right
         right = throttle - direction;
@@ -314,20 +326,39 @@ public class TeleOpDM18_Janus extends OpMode {
         }
 
         // FLIP GRIPPER
-        if (flip && autoMove && (robot.lift.distFromBottom() >= 10.0)) {
+        if (flip && autoMove && (robot.lift.distFromBottom() >= 9.0)) {
             // Flip after determining gripper is high enough
             robot.gripper.flip();
             flip = false;
-        } else if (flip && autoMove && robot.lift.distFromBottom() < 10.0) {
+        } else if (flip && autoMove && robot.lift.distFromBottom() < 9.0) {
             // Move gripper to top position before flipping if in another lift position
-            robot.lift.setLiftHeight(11.0);
+            robot.lift.setLiftHeight(9.5);
         }
 
         // PUSHER IN/OUT
         if (gamepad2.left_stick_y > 0.2 && !init_TeleOp || gamepad2.left_stick_y < -0.2 && !init_TeleOp) {
+            telemetry.addData("Push In/Out DFB ", robot.lift.distFromBottom());
+            telemetry.addData("Intake open: ", !robot.intake.isClosed());
+            telemetry.addData("Intake moving: ", robot.intake.isMoving());
+            telemetry.addData("Grip Btm Closed: ", robot.gripper.isBtmClosed());
+            telemetry.addData("Grip Btm Partial: ", robot.gripper.isBtmPartialOpen());
+            telemetry.addData("Grip Btm Moving: ", robot.gripper.isMoving());
+
+            // Override auto moves
+            autoMove = false;
+            init_AutoLoad = false;
+            init_Reset = false;
+
+            // reset all auto lift booleans to default
+            resetLiftBtm = false;
+            resetLiftTop = false;
+            liftChangePos = false;
+            flip = false;
+
+
             if ((robot.lift.distFromBottom() > 8) ||
                     (!robot.intake.isClosed() && !robot.intake.isMoving() &&
-                            !robot.gripper.isBtmOpen() && !robot.gripper.isMoving())) {
+                            (robot.gripper.isBtmClosed() || robot.gripper.isBtmPartialOpen()) && !robot.gripper.isMoving())) {
                 double speed = smoothPowerCurve(deadzone(-gamepad2.left_stick_y, 0.2));
                 speed = Range.clip(speed, -1, 1);
                 robot.gripper.moveInOut(speed);
@@ -335,6 +366,7 @@ public class TeleOpDM18_Janus extends OpMode {
                 robot.intake.setOpen();
                 if (robot.gripper.isBtmOpen()) {
                     robot.gripper.setBtmPartialOpen();
+
                 }
             }
         }
@@ -348,6 +380,7 @@ public class TeleOpDM18_Janus extends OpMode {
         if ((gamepad2.right_bumper && !isButtonPressed && !init_TeleOp)) {
             robot.gripper.setTopClosed();
             isButtonPressed = true;
+            topGripisClosed = true;
         }
 
         // open grippers partially if pusher is extended or fully if not
@@ -364,10 +397,12 @@ public class TeleOpDM18_Janus extends OpMode {
             if (robot.gripper.isPusherOut()) {
                 // Set to partial open since we are extended
                 robot.gripper.setTopPartialOpen();
+                topGripisClosed = true;
                 isButtonPressed = true;
             } else {
                 // Set fully open since we are all the way in
                 robot.gripper.setTopOpen();
+                topGripisClosed = false;
                 isButtonPressed = true;
             }
         }
@@ -389,25 +424,38 @@ public class TeleOpDM18_Janus extends OpMode {
             switch (nStates) {
 
                 case RESET_1: // OPEN INTAKE
-                    if (!robot.intake.isClosed()) {
+                    telemetry.clearAll();
+                    telemetry.addData("Reset: ", "1");
+                    if (robot.intake.isClosed()) {
                         robot.intake.setOpen();
-                    } else if (!robot.intake.isMoving()) {
                         nStates = States.RESET_2;
                     }
                     break;
 
-                case RESET_2: // LIFT TO MID POSITION & PUSHER IN
-                    if (robot.lift.targetPos != robot.lift.LIFT_MID_POS) {
-                        robot.lift.setLiftMid();
-                        robot.gripper.setBothOpen();
+                case RESET_2: // LIFT ABOVE INTAKE IF NOT ALREADY
+                    telemetry.clearAll();
+                    telemetry.addData("Reset: ", "2");
+                    if (!robot.intake.isMoving()){
+                        if (robot.lift.distFromBottom() < 8.5) {
+                            robot.lift.setLiftHeight(8.5);
+                            nStates = States.RESET_2_1;
+                        } else nStates = States.RESET_2_1;
                     }
+
+                case RESET_2_1: // PUSHER IN & OPEN GRIPPERS
+                    telemetry.clearAll();
+                    telemetry.addData("Reset: ", "2_1");
                     if (robot.lift.reachedFloor()) {
                         robot.gripper.setExtendIn();
+                        robot.gripper.setBothOpen();
+                        topGripisClosed = false;
                         nStates = States.RESET_3;
                     }
                     break;
 
                 case RESET_3:
+                    telemetry.clearAll();
+                    telemetry.addData("Reset: ", "3");
                     if (!robot.gripper.isExtending()) {
                         robot.lift.setLiftBtm();
                         nStates = States.RESET_4;
@@ -415,9 +463,12 @@ public class TeleOpDM18_Janus extends OpMode {
                     break;
 
                 case RESET_4:
+                    telemetry.clearAll();
+                    telemetry.addData("Reset: ", "4");
                     if (robot.lift.reachedFloor()){
                         if (robot.lift.resetFloorPos()) {
                             robot.intake.setClosed();
+                            robot.intake.setIn();
                             init_Reset = false;
                         }
                     }
@@ -467,10 +518,11 @@ public class TeleOpDM18_Janus extends OpMode {
 
                 case AUTO_LOAD_1_2:
                     // Open intake after gripper has closed
-                    telemetry.addData("Top is closed:", robot.gripper.isTopClosed());
+                    telemetry.clearAll();
+                    telemetry.addData("Top is closed:", topGripisClosed);
                     if (!robot.gripper.btmIsMoving()) {
                         robot.intake.setOpen();
-                        if (!robot.gripper.isTopClosed()) {
+                        if (!topGripisClosed) {
                             nStates = States.AUTO_LOAD_2;
                         } else {
                             nStates = States.AUTO_LOAD_SECOND;
@@ -493,6 +545,7 @@ public class TeleOpDM18_Janus extends OpMode {
                         robot.intake.setClosed();
                         robot.intake.setIn();
                         robot.gripper.flip(); // Flip gripper
+                        topGripisClosed = true;
                         nStates = States.AUTO_LOAD_4; // Go to next state in auto load sequence
                     }
                     break;
@@ -500,9 +553,9 @@ public class TeleOpDM18_Janus extends OpMode {
                 case AUTO_LOAD_4: // MOVE TO BTM FLOOR
 
                     if (!robot.gripper.isFlipping()) {
-                        robot.lift.setLiftBtm(); // Move lift to btm position after gripper is done flipping
-                        nStates = States.AUTO_LOAD_5;
-
+                        robot.lift.setLiftHeight(6.0); // Move lift to btm position after gripper is done flipping
+                        //nStates = States.AUTO_LOAD_5;
+                        init_AutoLoad = false;
                     }
                     break;
 
@@ -610,6 +663,7 @@ public class TeleOpDM18_Janus extends OpMode {
         // Intake IN
         if (gamepad1.right_trigger > 0.5 && !init_AutoLoad && !init_Reset) {
             robot.intake.setIn();
+            robot.intake.setClosed();
         }
 
         // Intake STOP
@@ -620,6 +674,7 @@ public class TeleOpDM18_Janus extends OpMode {
         // Intake OUT
         if (gamepad1.left_trigger > 0.5 && !init_AutoLoad && !init_Reset) {
             robot.intake.setOut();
+            robot.intake.setClosed();
         }
 
         // Intake STOP

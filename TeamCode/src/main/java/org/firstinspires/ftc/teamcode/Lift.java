@@ -117,7 +117,7 @@ public class Lift {
         liftMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         double thePower = LIFT_POWER;
         if (targetPos < liftMotor.getCurrentPosition()){
-            thePower /= 2;              // Moving down so use less power
+            thePower /= 1;              // Moving down so use less power
         }
         liftMotor.setPower(thePower);
         liftTimer.reset();
@@ -130,9 +130,9 @@ public class Lift {
         liftMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         double thePower = LIFT_POWER;
         if (targetPos < liftMotor.getCurrentPosition()){
-            thePower /= 2;              // Moving down so use less power
+            thePower /= 1;              // Moving down so use less power
         }
-        liftMotor.setPower(LIFT_POWER/2);
+        liftMotor.setPower(thePower);
         runDown = true;
         liftTimer.reset();
     }
@@ -152,7 +152,7 @@ public class Lift {
         liftMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         double thePower = LIFT_POWER;
         if (targetPos < liftMotor.getCurrentPosition()){
-            thePower /= 2;              // Moving down so use less power
+            thePower /= 1;              // Moving down so use less power
         }
         liftMotor.setPower(thePower);
         liftTimer.reset();

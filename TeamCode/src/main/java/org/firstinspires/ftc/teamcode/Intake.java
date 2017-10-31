@@ -94,20 +94,26 @@ public class Intake {
      * Open the intake
      */
     public void setOpen() {
-        intakeLeftServo.setPosition(INTAKE_LEFT_RELEASE);
-        intakeRightServo.setPosition(INTAKE_RIGHT_RELEASE);
-        isIntakeClosed = false;
-        timer.reset();
+        if (isClosed()) {
+            intakeLeftServo.setPosition(INTAKE_LEFT_RELEASE);
+            intakeRightServo.setPosition(INTAKE_RIGHT_RELEASE);
+            isIntakeClosed = false;
+            timer.reset();
+        }
+
     }
 
     /**
      * Close the intake
      */
     public void setClosed() {
-        intakeLeftServo.setPosition(INTAKE_LEFT_HOME);
-        intakeRightServo.setPosition(INTAKE_RIGHT_HOME);
-        isIntakeClosed = true;
-        timer.reset();
+        if (!isClosed()){
+            intakeLeftServo.setPosition(INTAKE_LEFT_HOME);
+            intakeRightServo.setPosition(INTAKE_RIGHT_HOME);
+            isIntakeClosed = true;
+            timer.reset();
+        }
+
     }
 
     public boolean isMoving() {
