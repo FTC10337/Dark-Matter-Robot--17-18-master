@@ -32,7 +32,7 @@ public class Intake {
     final static double INTAKE_LEFT_RELEASE = 0.27;
     final static double INTAKE_RIGHT_HOME = 0.2;
     final static double INTAKE_RIGHT_RELEASE = 0.44;
-    final static double INTAKE_MOVE_TIME = 500;     // 0.5 seconds to open or close intake
+    final static double INTAKE_MOVE_TIME = 200;     // 0.5 seconds to open or close intake
     final static double MAX_IN_POWER = 1.0;
     final static double MIN_IN_POWER = 0.6;
     final static double IN_POWER_DELTA = 0.005;      // Amount to increment/decrement power per cycle

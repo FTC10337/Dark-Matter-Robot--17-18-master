@@ -24,7 +24,7 @@ public class Lift {
     boolean runUp = false;
     boolean runDown = false;
 
-    public int LIFT_TIME = 3000;
+    public int LIFT_TIME = 2000;
     ElapsedTime liftTimer = new ElapsedTime();
 
     /* Lift constants */

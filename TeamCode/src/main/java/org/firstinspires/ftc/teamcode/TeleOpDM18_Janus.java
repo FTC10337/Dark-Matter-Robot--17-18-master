@@ -319,20 +319,20 @@ public class TeleOpDM18_Janus extends OpMode {
          */
 
         // INITIATE FLIP
-        if (gamepad2.x && !isButtonPressed && !init_TeleOp) {
+        if (gamepad2.x && !isButtonPressed && !init_TeleOp && !init_AutoLoad) {
             isButtonPressed = true;
             flip = true;
             autoMove = true;
         }
 
         // FLIP GRIPPER
-        if (flip && autoMove && (robot.lift.distFromBottom() >= 9.0)) {
+        if (flip && autoMove && (robot.lift.distFromBottom() >= 9.0) && !init_AutoLoad) {
             // Flip after determining gripper is high enough
             robot.gripper.flip();
             flip = false;
-        } else if (flip && autoMove && robot.lift.distFromBottom() < 9.0) {
+        } else if ((flip && autoMove && robot.lift.distFromBottom() < 9.0) && !init_AutoLoad) {
             // Move gripper to top position before flipping if in another lift position
-            robot.lift.setLiftHeight(9.5);
+            robot.lift.setLiftHeight(10.0);
         }
 
         // PUSHER IN/OUT
@@ -374,17 +374,17 @@ public class TeleOpDM18_Janus extends OpMode {
 
         // OPEN & CLOSE GRIPPERS
         // close grippers
-        if ((gamepad2.right_trigger > 0.5) && !init_TeleOp) {
+        if ((gamepad2.right_trigger > 0.5) && !init_TeleOp && !init_AutoLoad) {
             robot.gripper.setBtmClosed();
         }
-        if ((gamepad2.right_bumper && !isButtonPressed && !init_TeleOp)) {
+        if ((gamepad2.right_bumper && !isButtonPressed && !init_TeleOp) && !init_AutoLoad) {
             robot.gripper.setTopClosed();
             isButtonPressed = true;
             topGripisClosed = true;
         }
 
         // open grippers partially if pusher is extended or fully if not
-        if ((gamepad2.left_trigger > 0.5) && !init_TeleOp) {
+        if ((gamepad2.left_trigger > 0.5) && !init_TeleOp && !init_AutoLoad) {
             if (robot.gripper.isPusherOut()) {
                 // Set to partial open since we are extended
                 robot.gripper.setBtmPartialOpen();
@@ -393,7 +393,7 @@ public class TeleOpDM18_Janus extends OpMode {
                 robot.gripper.setBtmOpen();
             }
         }
-        if ((gamepad2.left_bumper && !isButtonPressed && !init_TeleOp)) {
+        if (gamepad2.left_bumper && !isButtonPressed && !init_TeleOp&& !init_AutoLoad) {
             if (robot.gripper.isPusherOut()) {
                 // Set to partial open since we are extended
                 robot.gripper.setTopPartialOpen();
@@ -417,6 +417,13 @@ public class TeleOpDM18_Janus extends OpMode {
             autoMove = true;
             init_Reset = true;
             init_AutoLoad = false;
+
+            // reset all auto lift booleans to default
+            resetLiftBtm = false;
+            resetLiftTop = false;
+            liftChangePos = false;
+            flip = false;
+
             nStates = States.RESET_1;
         }
 
@@ -429,7 +436,7 @@ public class TeleOpDM18_Janus extends OpMode {
                     if (robot.intake.isClosed()) {
                         robot.intake.setOpen();
                         nStates = States.RESET_2;
-                    }
+                    } else nStates = States.RESET_2;
                     break;
 
                 case RESET_2: // LIFT ABOVE INTAKE IF NOT ALREADY
@@ -482,7 +489,7 @@ public class TeleOpDM18_Janus extends OpMode {
          */
 
         // INITIATE AUTO LOAD - DRIVER 2 - Can be activated when glyph is detected
-        if (gamepad2.a && glyphDetected && !isButtonPressed && !init_TeleOp) {
+        if (gamepad2.a && glyphDetected && !isButtonPressed && !init_TeleOp && !init_AutoLoad) {
             isButtonPressed = true;
             nStates = States.AUTO_LOAD_INIT;
             init_AutoLoad = true;
@@ -539,8 +546,8 @@ public class TeleOpDM18_Janus extends OpMode {
                     }
                     break;
 
-                case AUTO_LOAD_3: // FLIP AFTER TOP REACHED
-                    if (robot.lift.distFromBottom() > 9.0) { // Check to see if lift reached height to flip
+                case AUTO_LOAD_3: // FLIP AFTER FLIP HEIGHT REACHED
+                    if (robot.lift.distFromBottom() > 8.0) { // Check to see if lift reached height to flip
                         // If it reached target position, set intake back to closed position and start intaking again
                         robot.intake.setClosed();
                         robot.intake.setIn();
@@ -553,7 +560,7 @@ public class TeleOpDM18_Janus extends OpMode {
                 case AUTO_LOAD_4: // MOVE TO BTM FLOOR
 
                     if (!robot.gripper.isFlipping()) {
-                        robot.lift.setLiftHeight(6.0); // Move lift to btm position after gripper is done flipping
+                        robot.lift.setLiftBtm(); // Move lift to btm position after gripper is done flipping
                         //nStates = States.AUTO_LOAD_5;
                         init_AutoLoad = false;
                     }
@@ -569,7 +576,7 @@ public class TeleOpDM18_Janus extends OpMode {
                 // LOAD SEQUENCE FOR SECOND GLYPH - Determined if top gripper is CLOSED, therefore assumed it has a glyph.
                 case AUTO_LOAD_SECOND: // LIFT TO DRIVE
                     if (!robot.intake.isMoving()) {
-                        robot.lift.setLiftHeight(2.0);
+                        robot.lift.setLiftHeight(1.0); // Lift above ground to drive
                         init_AutoLoad = false;
                     }
                     break;
