@@ -80,7 +80,10 @@ public class TeleOpDM18_Janus extends OpMode {
 
     boolean glyphDetected = false;
 
+    boolean slowDriveTrain = false;
+
     int turnCoefficient = 1;
+    int driveCoefficient = 1;
 
     int liftFloorTarget = 0;
 
@@ -177,15 +180,25 @@ public class TeleOpDM18_Janus extends OpMode {
         double throttle = -gamepad1.left_stick_y;
         double direction = gamepad1.right_stick_x;
 
+        // Driver 1 toggle drive train speed controls
+        if (gamepad1.left_bumper) slowDriveTrain = false;
 
-        // Smooth and deadzone the joytick values
-        throttle = smoothPowerCurve(deadzone(throttle, 0.10));
+        if (gamepad2.right_bumper) slowDriveTrain = true;
 
-        // Change turn speed if trying to place glyph
-        if (!init_TeleOp && robot.gripper.isPusherOut()) {
+        // Toggle drive train speed to SLOW when pusher is OUT
+        if (!init_TeleOp && robot.gripper.isPusherOut()) slowDriveTrain = true;
+
+        // Change drive and turn speed coefficient
+        if (!init_TeleOp && slowDriveTrain) {
             turnCoefficient = 4;
-        } else turnCoefficient = 2;
+            driveCoefficient = 2;
+        } else {
+            turnCoefficient = 2;
+            driveCoefficient = 1;
+        }
 
+        // Smooth and deadzone the joystick values
+        throttle = smoothPowerCurve(deadzone(throttle, 0.10)) / driveCoefficient ;
         direction = (smoothPowerCurve(deadzone(direction, 0.10))) / turnCoefficient;
 
         // Calculate the drive motors for left and right
@@ -202,6 +215,7 @@ public class TeleOpDM18_Janus extends OpMode {
             right /= max;
         }
 
+        // Apply power to drive motors
         robot.leftDrive1.setPower(left);
         robot.leftDrive2.setPower(left);
         robot.rightDrive1.setPower(right);
@@ -435,14 +449,18 @@ public class TeleOpDM18_Janus extends OpMode {
                     telemetry.addData("Reset: ", "1");
                     if (robot.intake.isClosed()) {
                         robot.intake.setOpen();
+                        robot.gripper.setBothPartialOpen();
                         nStates = States.RESET_2;
-                    } else nStates = States.RESET_2;
+                    } else {
+                        robot.gripper.setBothPartialOpen();
+                        nStates = States.RESET_2;
+                    }
                     break;
 
                 case RESET_2: // LIFT ABOVE INTAKE IF NOT ALREADY
                     telemetry.clearAll();
                     telemetry.addData("Reset: ", "2");
-                    if (!robot.intake.isMoving()){
+                    if (!robot.intake.isMoving() && !robot.gripper.isMoving()){
                         if (robot.lift.distFromBottom() < 8.5) {
                             robot.lift.setLiftHeight(8.5);
                             nStates = States.RESET_2_1;
@@ -476,6 +494,7 @@ public class TeleOpDM18_Janus extends OpMode {
                         if (robot.lift.resetFloorPos()) {
                             robot.intake.setClosed();
                             robot.intake.setIn();
+                            slowDriveTrain = false;
                             init_Reset = false;
                         }
                     }
@@ -541,7 +560,7 @@ public class TeleOpDM18_Janus extends OpMode {
                 case AUTO_LOAD_2: // LIFT TO TOP
                     // Set lift position to move to top after intake has opened
                     if (!robot.intake.isMoving()) {
-                        robot.lift.setLiftTop();
+                        robot.lift.setLiftHeight(9.0);
                         nStates = States.AUTO_LOAD_3;
                     }
                     break;

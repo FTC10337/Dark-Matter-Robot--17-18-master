@@ -120,6 +120,9 @@ public class Auto_Collect_Test extends LinearOpMode {
 
     int glyphsCollected = 0;
 
+    boolean completeTask = false;
+    boolean secondAttempt = false;
+
     // Storage for reading adaFruit color sensor for beacon sensing
     // adaHSV is an array that will hold the hue, saturation, and value information.
     float[] adaHSV = {0F, 0F, 0F};
@@ -236,73 +239,149 @@ public class Auto_Collect_Test extends LinearOpMode {
         robot.lift.resetFloorPos();
         robot.gripper.setBothOpen();
 
-        while(!robot.lift.resetFloorPos()) idle();
+        while (!robot.lift.resetFloorPos()) idle();
 
+        // Record drive motor encoder positions. Use these values to return to this position after collecting glyphs
         int left1Pos = robot.leftDrive1.getCurrentPosition();
         int left2Pos = robot.leftDrive2.getCurrentPosition();
         int right1Pos = robot.rightDrive1.getCurrentPosition();
         int right2Pos = robot.rightDrive2.getCurrentPosition();
 
-        // Attempt to collect glyph into intake
-        collectGlyph(0.25, 5, true, 0);
+        // FIRST ATTEMPT to collect glyph into intake
+        collectGlyph(0.25, 24, 5, true, 0);
 
-        // Determine if glyph is in intake. If so, auto load first glyph and take account for it.
-        if (robot.intake.detectGlyph()) {
-            autoLoadFirstGlyph();
-            glyphsCollected += 1;
+        if (robot.intake.detectGlyph() && !completeTask) {
+            if (glyphsCollected == 0) {
+                if (autoLoadFirstGlyph()) {
+                    glyphsCollected += 1;
+                } else { secondAttempt = true;
+                }
+            }
+
+            // SECOND ATTEMPT to collect glyph into intake
+            collectGlyph(0.25, secondAttempt ? 3 : 6, 3 , true, 0);
+
+            if (robot.intake.detectGlyph() && !completeTask) {
+                if (glyphsCollected == 0) {
+                    if (autoLoadFirstGlyph()) {
+                        glyphsCollected += 1;
+                        secondAttempt = false;
+                    } secondAttempt = true;
+                }
+                if (glyphsCollected == 1) {
+                    if (autoLoadSecondGlyph()) {
+                        glyphsCollected += 1;
+                        completeTask = true;
+                    }
+                }
+            }
+
+            // THIRD ATTEMPT to collect glyph into intake - Runs if 2 glyphs have not yet been picked up
+            if (!completeTask) collectGlyph(0.25, secondAttempt ? 3 : 6, 3 , true, 0);
+
+            if (robot.intake.detectGlyph() && !completeTask) {
+                if (glyphsCollected == 0) {
+                    if (autoLoadFirstGlyph()) {
+                        glyphsCollected += 1;
+                        secondAttempt = true;
+                    } secondAttempt = false;
+                }
+                if (glyphsCollected == 1) {
+                    if (autoLoadSecondGlyph()) {
+                        glyphsCollected += 1;
+                        completeTask = true;
+                    }
+                }
+            }
+
+            // LAST ATTEMPT to collect glyph into intake - Runs if 2 glyphs have not yet been picked up
+            if (!completeTask) collectGlyph(0.25, secondAttempt ? 3 : 6, 3 , true, 0);
+
+            if (robot.intake.detectGlyph() && !completeTask) {
+                if (glyphsCollected == 0) {
+                    if (autoLoadFirstGlyph()) {
+                        glyphsCollected += 1;
+                    }
+                }
+                if (glyphsCollected == 1) {
+                    if (autoLoadSecondGlyph()) {
+                        glyphsCollected += 1;
+                        completeTask = true;
+                    }
+                }
+            }
+
+
+            // Return to original location - safe zone
+            returnToPosition(0.5, left1Pos, left2Pos, right1Pos, right2Pos, 5.0, true, 0);
+            sleep(500);
+
+
+            // DETERMINE how many GLYPHS have been COLLECTED and either park in safe zone or attempt to score glyph(s)
+
+            // One glyph collected. Attempt to score.
+            if (glyphsCollected == 1 && completeTask) {
+
+                gyroTurn(0.8, 180, P_TURN_COEFF);
+
+                sleep(150);
+
+                robot.lift.setLiftHeight(8.0);
+
+                encoderDrive(0.6, 15, 3, true, 180);
+
+                while (!robot.lift.reachedFloor()) idle();
+
+                robot.gripper.setExtendOut();
+
+                while (robot.gripper.isExtending()) idle();
+
+                robot.gripper.setBothPartialOpen();
+
+                while(robot.gripper.isMoving()) idle();
+
+                encoderDrive(0.5, -10, 3, false, 180);
+
+                robot.gripper.setExtendIn();
+
+            }
+
+
+            // Two glyphs collected. Attempt to score.
+            if (glyphsCollected == 2 && completeTask) {
+
+                gyroTurn(0.8, 180, P_TURN_COEFF);
+
+                sleep(150);
+
+                robot.lift.setLiftHeight(8.0);
+
+                encoderDrive(0.6, 15, 3, true, 180);
+
+                while (!robot.lift.reachedFloor()) idle();
+
+                robot.gripper.setExtendOut();
+
+                while (robot.gripper.isExtending()) idle();
+
+                robot.gripper.setBothPartialOpen();
+
+                while(robot.gripper.isMoving()) idle();
+
+                encoderDrive(0.5, -10, 3, false, 180);
+
+                robot.gripper.setExtendIn();
+
+            }
+
+            RobotLog.i("DM10337- Finished last move of auto");
+
+
+            telemetry.addData("Path", "Complete");
+            telemetry.update();
         }
 
-        // Attempt to collect glyph into intake
-        collectGlyph(0.25, 2,true, 0);
-
-        // Determine if glyph is in intake. If so, auto load glyph as first or second depending on whether one was previously loaded or not.
-        if (robot.intake.detectGlyph() && glyphsCollected == 1) {
-            autoLoadSecondGlyph();
-        } else if (robot.intake.detectGlyph() && glyphsCollected == 0) {
-            autoLoadFirstGlyph();
-        }
-
-        // Return to original location - safe zone
-        returnToPosition(0.5, left1Pos, left2Pos, right1Pos, right2Pos, 5.0, true, 0);
-
-        sleep(500);
-
-        // If one or more glyphs are loaded, attempt to score them.
-        if (glyphsCollected > 0){
-            gyroTurn(0.8, 180, P_TURN_COEFF);
-
-            sleep (500);
-
-            encoderDrive(0.6, 15, 3, true, 180);
-
-            sleep (500);
-
-            robot.lift.setLiftTop();
-
-            while(!robot.lift.reachedFloor()) idle();
-
-            robot.gripper.setExtendOut();
-
-            while(robot.gripper.isExtending()) idle();
-
-            robot.gripper.setBothPartialOpen();
-
-            sleep(250);
-
-            encoderDrive(0.5, -10, 3, false, 180);
-
-            robot.gripper.setExtendIn();
-        }
-
-
-
-        RobotLog.i("DM10337- Finished last move of auto");
-
-
-        telemetry.addData("Path", "Complete");
-        telemetry.update();
     }
-
     /*
      *
      */
@@ -625,7 +704,6 @@ public class Auto_Collect_Test extends LinearOpMode {
         return Range.clip(error * PCoeff, -1, 1);
     }
 
-
     /**
      * Record the current heading and use that as the 0 heading point for gyro reads
      * @return
@@ -647,12 +725,12 @@ public class Auto_Collect_Test extends LinearOpMode {
         return angles.firstAngle - headingBias;
     }
 
+
     /**
-     * Always returns true as we are blue.
-     *
-     * Red OpMode would extend this class and Override this single method.
-     *
-     * @return          Always true
+     *     Color sensor code for detecting jewel color
+     *     @return     -1   Red
+     *                  1   Blue
+     *                  0   no color detected
      */
 
     public int JewelColor () {
@@ -693,10 +771,13 @@ public class Auto_Collect_Test extends LinearOpMode {
      * Robot attempts to maintain heading throughout collection procress
      * Robot stops once glyph is retrieved
      **/
-    public void collectGlyph (double speed, int timeout, boolean useGyro, double heading) {
+    public void collectGlyph (double speed, double distance, int timeout, boolean useGyro, double heading) {
 
         robot.intake.setClosed();
         robot.intake.setIn();
+
+        // When go true when glyph is detected and function will stop
+        boolean stop = false;
 
         // The potentially adjusted current target heading
         double curHeading = heading;
@@ -705,6 +786,13 @@ public class Auto_Collect_Test extends LinearOpMode {
         final double MINSPEED = 0.30;           // Start at this power
         final double SPEEDINCR = 0.015;         // And increment by this much each cycle
         double curSpeed;                        // Keep track of speed as we ramp
+
+        // Average position of all motor encoders
+        int averageOriginalPos = (robot.leftDrive1.getCurrentPosition() + robot.leftDrive2.getCurrentPosition() + robot.rightDrive1.getCurrentPosition() + robot.rightDrive2.getCurrentPosition())/4;
+        int averageNewPos = 0;
+
+        // To keep track of distance travelled
+        double distanceTravelled = 0;
 
         // reset the timeout time and start motion.
         runtime.reset();
@@ -718,15 +806,16 @@ public class Auto_Collect_Test extends LinearOpMode {
         robot.leftDrive2.setPower(Math.abs(curSpeed));
         robot.rightDrive2.setPower(Math.abs(curSpeed));
 
-        // keep looping while we are still active, and there is time left, until distance sensor detects glyph in intake
 
-        boolean stop = false;
-
-        while (opModeIsActive() && (runtime.seconds() < timeout) && !stop) {
+        // keep looping while we are still active, there is time left, desired distance is reached, or until distance sensor detects glyph in intake
+        while (opModeIsActive() && (runtime.seconds() < timeout) && distanceTravelled < distance && !stop) {
 
             if (robot.intake.detectGlyph()) {
                 stop = true;
             }
+
+            averageNewPos = (robot.leftDrive1.getCurrentPosition() + robot.leftDrive2.getCurrentPosition() + robot.rightDrive1.getCurrentPosition() + robot.rightDrive2.getCurrentPosition())/4;
+            distanceTravelled = (averageOriginalPos - averageNewPos)/robot.COUNTS_PER_INCH;
 
             // Ramp up motor powers as needed
             if (curSpeed < speed) {
@@ -778,8 +867,9 @@ public class Auto_Collect_Test extends LinearOpMode {
     }
 
     /**
-     * Robot returns to designatied encoder position
+     * Robot returns to designated encoder position
      **/
+
     public void returnToPosition(double speed,
                                  int left1Pos,
                                  int left2Pos,
@@ -907,57 +997,115 @@ public class Auto_Collect_Test extends LinearOpMode {
         }
     }
 
+    /**
+     *     Auto load first glyph routine
+     */
+
+    public boolean autoLoadFirstGlyph() {
+
+        robot.intake.setInAlt();
+
+        sleep(250);
+
+        robot.intake.setStop();
+
+        robot.gripper.setBtmClosed();
+
+        while(robot.gripper.btmIsMoving()) idle();
+
+        robot.intake.setOpen();
+
+        while(robot.intake.isMoving()) idle();
+
+        robot.lift.setLiftHeight(9.0);
+
+        while(robot.lift.distFromBottom() < 8.5) idle(); // Wait for gripper to lift above 8.5 inches
+
+        if (robot.intake.detectGlyph()) { // If glyph is still detected on the ground, assumed pick up failed because of bad alignment
+
+            robot.intake.setOut(); // Push misaligned glyph out of intake
+
+            sleep (250);
+
+            return false;
+
+        } else { // If glyph not detected on the ground, assume it was picked up by grippers and flip
+
+            robot.gripper.flip();
+
+            while(robot.gripper.isFlipping()) idle();
+
+            robot.lift.setLiftBtm();
+
+            while(!robot.lift.reachedFloor()) idle();
+
+            while (robot.lift.resetFloorPos()) idle();
+
+            return true;
+        }
+
+
+    }
+
+    /*
+     *    Auto load second glyph routine
+     */
+
+    public boolean autoLoadSecondGlyph() {
+
+        robot.intake.setInAlt();
+
+        sleep(250);
+
+        robot.intake.setStop();
+
+        robot.gripper.setBtmClosed();
+
+        while (robot.gripper.btmIsMoving()) idle();
+
+        robot.intake.setOpen();
+
+        while (robot.intake.isMoving()) idle();
+
+        robot.lift.setLiftHeight(8.0);
+
+        while (!robot.lift.reachedFloor()) idle();
+
+        if (robot.intake.detectGlyph()) { // If glyph is still detected on the ground, assumed pick up failed because of bad alignment
+
+            robot.intake.setOut();  // Push misaligned glyph out of intake
+
+            sleep(250);
+
+            return false;
+
+        } else {  // If glyph not detected on the ground, assume it was picked up by grippers and flip
+
+            robot.lift.setLiftHeight(2.0); // Raise glyph to driving height
+
+            while (!robot.lift.reachedFloor()) idle();
+
+            return true;
+        }
+
+    }
+
+    /**
+     * Always returns true as we are blue.
+     *
+     * Red OpMode would extend this class and Override this single method.
+     *
+     * @return          Always true
+     */
+
     public boolean iAmBlue() {
         return true;
     }
 
-    public void autoLoadFirstGlyph() {
 
-        robot.gripper.setBtmClosed();
-
-        while(robot.gripper.btmIsMoving()) idle();
-
-        robot.intake.setOpen();
-
-        while(robot.intake.isMoving()) idle();
-
-        robot.lift.setLiftTop();
-
-        while(!robot.lift.reachedFloor()) idle();
-
-        while(robot.lift.resetTopPos()) idle();
-
-        robot.gripper.flip();
-
-        while(robot.gripper.isFlipping()) idle();
-
-        robot.lift.setLiftBtm();
-
-        while(!robot.lift.reachedFloor()) idle();
-
-        robot.lift.resetFloorPos();
-
-        while(!robot.lift.reachedFloor()) idle();
-
-    }
-
-    public void autoLoadSecondGlyph() {
-
-        robot.gripper.setBtmClosed();
-
-        while(robot.gripper.btmIsMoving()) idle();
-
-        robot.intake.setOpen();
-
-        while(robot.intake.isMoving()) idle();
-
-        robot.lift.setLiftTop();
-
-        while(!robot.lift.reachedFloor()) idle();
-
-        while(!robot.lift.resetTopPos()) idle();
-    }
-
+    /*
+     *    Driver controller switched used for debugging autonomous routine
+     */
 
     public boolean waitForSwitch() {
         while (!gamepad1.a) {

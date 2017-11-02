@@ -35,7 +35,7 @@ public class Intake {
     final static double INTAKE_MOVE_TIME = 200;     // 0.5 seconds to open or close intake
     final static double MAX_IN_POWER = 1.0;
     final static double MIN_IN_POWER = 0.6;
-    final static double IN_POWER_DELTA = 0.005;      // Amount to increment/decrement power per cycle
+    final static double IN_POWER_DELTA = 0.002;      // Amount to increment/decrement power per cycle
 
     /* Intake state variables */
     boolean intakeCycle = true;        // True we are incrementing right power and decrementing left
@@ -126,6 +126,19 @@ public class Intake {
     public void setIn() {
         rInPower = MIN_IN_POWER;
         lInPower = MAX_IN_POWER;
+        intakeLeftMotor.setPower(lInPower);
+        intakeRightMotor.setPower(rInPower);
+        isIntakeInOn = true;
+        isIntakeOutOn = false;
+        intakeCycle = true;
+    }
+
+    /**
+     * Set the intake feed wheels in
+     */
+    public void setInAlt() {
+        rInPower = MAX_IN_POWER;
+        lInPower = MIN_IN_POWER;
         intakeLeftMotor.setPower(lInPower);
         intakeRightMotor.setPower(rInPower);
         isIntakeInOn = true;
